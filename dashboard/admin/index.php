@@ -1,11 +1,19 @@
 <?php
+// Mulai sesi
 session_start();
+
+// Cek apakah sesi user tidak ada
+if (!isset($_SESSION['role'])) {
+    // Redirect ke halaman login jika sesi tidak ada
+    header("Location: ../../login");
+    exit();
+}
 
 // Cek apakah user memiliki role yang sesuai
 if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'super_admin' && $_SESSION['role'] !== 'admin')) {
     // Redirect atau tampilkan pesan error jika user tidak memiliki role yang sesuai
     echo "<script>alert('Anda tidak memiliki akses untuk melihat halaman ini.'); window.location.href = '../user/';</script>";
-    exit;
+    exit();
 }
 
 include '../../config/koneksi.php';
@@ -33,64 +41,9 @@ if ($resultSiswa->num_rows > 0) {
     $total_siswa = 0;
 }
 
-// READ
-// Query untuk menghitung total data dan halaman
-$perPage = 5; // Jumlah data per halaman
-$query = "SELECT COUNT(*) as total FROM admin";
-$totalData = mysqli_fetch_assoc(mysqli_query($koneksi, $query))['total']; // Total data
-$lastPage = ceil($totalData / $perPage); // Hitung total halaman
-
-// Ambil data admin untuk halaman saat ini
-$currentPage = $_GET['page'] ?? 1; // Halaman saat ini, defaultnya 1
-$start = ($currentPage - 1) * $perPage; // Hitung index awal data
-$query = "SELECT * FROM admin LIMIT $start, $perPage";
-$resultAdmin = mysqli_query($koneksi, $query);
-
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    if (isset($_POST['submit'])) {
-        $name = $_POST['username'];
-        $email = $_POST['email'];
-        $role = $_POST['role'];
-        $password = md5($_POST['password']);
-
-        $query = "INSERT INTO admin (username, email, role, password) VALUES ('$name', '$email', '$role', '$password')";
-        mysqli_query($koneksi, $query);
-
-        // Redirect atau refresh halaman agar perubahan terlihat
-        header("Location: ./");
-        exit();
-    }
-
-    if (isset($_POST['update'])) {
-        $id = $_POST['id'];
-        $name = $_POST['username'];
-        $email = $_POST['email'];
-        $role = $_POST['role'];
-
-        // Lakukan query update ke database
-        $query = "UPDATE admin SET username='$name', email='$email', role='$role' WHERE id='$id'";
-        mysqli_query($koneksi, $query);
-
-        // Redirect atau refresh halaman agar perubahan terlihat
-        header("Location: ./");
-        exit();
-    }
-
-    if (isset($_POST['delete'])) {
-        $id = $_POST['id'];
-
-        // Lakukan query delete ke database
-        $query = "DELETE FROM admin WHERE id='$id'";
-        mysqli_query($koneksi, $query);
-
-        // Redirect atau refresh halaman agar perubahan terlihat
-        header("Location: ./");
-        exit();
-    }
-}
-
-$koneksi->close();
+// $koneksi->close();
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -272,7 +225,7 @@ $koneksi->close();
             <?php include '../sidebar.php' ?>
             <!-- ./Sidebar -->
 
-            <div class="h-full ml-14 mt-14 md:ml-64">
+            <div class="h-full ml-14 mt-14 mb-10 md:ml-64">
                 <!-- Statistics Cards -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 p-4 gap-4">
                     <div class="bg-blue-500 dark:bg-gray-800 shadow-lg rounded-md flex items-center justify-between p-3 border-b-4 border-blue-600 dark:border-gray-600 text-white font-medium group">
@@ -289,7 +242,7 @@ $koneksi->close();
                     <div class="bg-blue-500 dark:bg-gray-800 shadow-lg rounded-md flex items-center justify-between p-3 border-b-4 border-blue-600 dark:border-gray-600 text-white font-medium group">
                         <div class="flex justify-center items-center w-14 h-14 bg-white rounded-full transition-all duration-300 transform group-hover:rotate-12">
                             <svg width="30" height="30" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="stroke-current text-blue-800 dark:text-gray-800 transform transition-transform duration-500 ease-in-out">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
                             </svg>
                         </div>
                         <div class="text-right">
@@ -297,87 +250,30 @@ $koneksi->close();
                             <p>Siswa</p>
                         </div>
                     </div>
-                </div>
-                <!-- ./Statistics Cards -->
-
-                <div class="container p-4">
-                    <h1 class="text-2xl font-bold mb-4">CRUD Admin</h1>
-                    <!-- Form Create User -->
-                    <form method="post" class="mb-4 rounded text-black dark:text-white">
-                        <input type="text" name="username" placeholder="Username" required class="rounded px-2 py-1 bg-white dark:bg-gray-900">
-                        <input type="email" name="email" placeholder="Email" required class="rounded px-2 py-1 bg-white dark:bg-gray-900">
-                        <select name="role" id="name" class="rounded px-2 py-1 bg-white dark:bg-gray-900">
-                            <option value="user" selected>User</option>
-                            <option value="admin">Admin</option>
-                            <option value="super_admin">Super Admin</option>
-                        </select>
-                        <input type="password" name="password" placeholder="Password" required class="rounded px-2 py-1 bg-white dark:bg-gray-900">
-                        <button type="submit" name="submit" class="bg-gray-900 hover:bg-gray-800 text-white font-bold py-1 px-4 rounded">Tambah User</button>
-                    </form>
-
-                    <!-- Daftar User -->
-                    <div class="text-gray-900 bg-gray-200 dark:bg-gray-900 dark:text-gray-100 rounded-md">
-                        <div class="p-4 flex">
-                            <h1 class="text-3xl">
-                                ADMIN
-                            </h1>
+                    <div class="bg-blue-500 dark:bg-gray-800 shadow-lg rounded-md flex items-center justify-between p-3 border-b-4 border-blue-600 dark:border-gray-600 text-white font-medium group">
+                        <div class="flex justify-center items-center w-14 h-14 bg-white rounded-full transition-all duration-300 transform group-hover:rotate-12">
+                            <svg width="30" height="30" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="stroke-current text-blue-800 dark:text-gray-800 transform transition-transform duration-500 ease-in-out">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                            </svg>
                         </div>
-                        <div class="px-3 py-4 flex justify-center">
-                            <div class="overflow-x-auto w-full">
-                                <table class="w-full text-md bg-white dark:bg-gray-800 shadow-md rounded mb-4">
-                                    <tr class="border-b">
-                                        <th class="text-left p-3 px-5">ID</th>
-                                        <th class="text-left p-3 px-5">Username</th>
-                                        <th class="text-left p-3 px-5">Email</th>
-                                        <th class="text-left p-3 px-5">Role</th>
-                                        <th class="text-left"></th>
-                                        <th class="text-left"></th>
-                                    </tr>
-                                    <tbody>
-                                        <?php while ($admin = mysqli_fetch_assoc($resultAdmin)) : ?>
-                                            <tr class="border-b hover:bg-orange-100 bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-700">
-                                                <td class="p-3 px-5 font-bold"><?php echo $admin['id']; ?></td>
-                                                <form method="post">
-                                                    <input type="hidden" name="id" value="<?php echo $admin['id']; ?>">
-                                                    <td class="p-3 px-5"><input type="text" name="username" value="<?php echo $admin['username']; ?>" class="bg-transparent"></td>
-                                                    <td class="p-3 px-5"><input type="text" name="email" value="<?php echo $admin['email']; ?>" class="bg-transparent"></td>
-                                                    <td class="p-3 px-5">
-                                                        <select name="role" class="bg-gray-800 text-white">
-                                                            <option value="user" <?php echo ($admin['role'] == 'user') ? 'selected' : ''; ?>>user</option>
-                                                            <option value="admin" <?php echo ($admin['role'] == 'admin') ? 'selected' : ''; ?>>admin</option>
-                                                            <option value="super_admin" <?php echo ($admin['role'] == 'super_admin') ? 'selected' : ''; ?>>super_admin</option>
-                                                        </select>
-                                                    </td>
-                                                    <td class="p-3 px-5"><input type="password" name="password" value="<?php echo $admin['password']; ?>" class="bg-transparent"></td>
-                                                    <td class="p-3">
-                                                        <button type="submit" name="update" class="text-sm bg-blue-500 hover:bg-blue-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline w-full">Save</button>
-                                                    </td>
-                                                </form>
-                                                <form method="post">
-                                                    <input type="hidden" name="id" value="<?php echo $admin['id']; ?>">
-                                                    <td class="p-3">
-                                                        <button type="submit" name="delete" class="text-sm bg-red-500 hover:bg-red-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline w-full">Delete</button>
-                                                    </td>
-                                                </form>
-                                            </tr>
-                                        <?php endwhile; ?>
-                                    </tbody>
-                                </table>
-
-                                <div x-data="{ currentPage: <?php echo $currentPage; ?>, lastPage: <?php echo $lastPage; ?> }" class="text-center mt-4 dark:text-black">
-                                    <a x-bind:href="'?page=' + (currentPage > 1 ? currentPage - 1 : 1)" class="inline-block bg-gray-200 hover:bg-gray-300 rounded px-3 py-1 mr-2">
-                                        <button @click="currentPage = currentPage > 1 ? currentPage - 1 : 1" class="focus:outline-none">Previous</button>
-                                    </a>
-                                    <span x-text="currentPage" class="mx-2 dark:text-white"></span>
-                                    <a x-bind:href="'?page=' + (currentPage < lastPage ? currentPage + 1 : lastPage)" class="inline-block bg-gray-200 hover:bg-gray-300 rounded px-3 py-1 ml-2">
-                                        <button @click="currentPage = currentPage < lastPage ? currentPage + 1 : lastPage" class="focus:outline-none">Next</button>
-                                    </a>
-                                </div>
-
-                            </div>
+                        <div class="text-right">
+                            <p class="text-2xl">$11,257</p>
+                            <p>Sales</p>
+                        </div>
+                    </div>
+                    <div class="bg-blue-500 dark:bg-gray-800 shadow-lg rounded-md flex items-center justify-between p-3 border-b-4 border-blue-600 dark:border-gray-600 text-white font-medium group">
+                        <div class="flex justify-center items-center w-14 h-14 bg-white rounded-full transition-all duration-300 transform group-hover:rotate-12">
+                            <svg width="30" height="30" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="stroke-current text-blue-800 dark:text-gray-800 transform transition-transform duration-500 ease-in-out">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-2xl">$75,257</p>
+                            <p>Balances</p>
                         </div>
                     </div>
                 </div>
+                <!-- ./Statistics Cards -->
             </div>
         </div>
     </div>

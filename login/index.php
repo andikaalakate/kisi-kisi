@@ -13,7 +13,7 @@
 <body>
     <div class="main-container">
         <h1>LOGIN</h1>
-        <form id="loginForm">
+        <form id="loginForm" action="logina.php" method="post">
             <div class="login-container">
                 <label for="">
                     <span>Username</span>
