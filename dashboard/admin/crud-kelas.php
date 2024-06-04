@@ -21,96 +21,73 @@ include '../../config/koneksi.php';
 // READ
 // Query untuk menghitung total data dan halaman
 $perPage = 5; // Jumlah data per halaman
-$query = "SELECT COUNT(*) as total FROM guru";
+$query = "SELECT COUNT(*) as total FROM kelas";
 $totalData = mysqli_fetch_assoc(mysqli_query($koneksi, $query))['total']; // Total data
 $lastPage = ceil($totalData / $perPage); // Hitung total halaman
 
-// Ambil data guru untuk halaman saat ini
+// Ambil data kelas untuk halaman saat ini
 $currentPage = $_GET['page'] ?? 1; // Halaman saat ini, defaultnya 1
 $start = ($currentPage - 1) * $perPage; // Hitung index awal data
-$query = "SELECT * FROM guru LIMIT $start, $perPage";
-$resultGuru = mysqli_query($koneksi, $query);
+$query = "SELECT * FROM kelas LIMIT $start, $perPage";
+$resultKelas = mysqli_query($koneksi, $query);
 
 // Inisialisasi nomor urut
 $nomor = ($currentPage - 1) * $perPage + 1;
 
-// Untuk create
-$queryKelas = "SELECT * FROM kelas";
-$resultKelas = mysqli_query($koneksi, $queryKelas);
-
-// Untuk Read and Edit
-// Ambil data kelas dari database
-$kelasResult = mysqli_query($koneksi, "SELECT kode_kelas FROM kelas");
-
-// Array untuk menyimpan kode_kelas
-$kelasList = [];
-while ($kelasRow = mysqli_fetch_assoc($kelasResult)) {
-    $kelasList[] = $kelasRow['kode_kelas'];
-}
-
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (isset($_POST['submit'])) {
         $nama = $_POST['nama'];
-        $mapel = $_POST['mapel'];
-        $jkelamin = $_POST['jkelamin'];
-        $no_telp = $_POST['no_telp'];
-        $alamat = $_POST['alamat'];
-        $kelas = $_POST['kelas'];
+        $tahun_mulai = $_POST['tahun_mulai'];
+        $tahun_berakhir = $_POST['tahun_berakhir'];
 
-        $kelas_json = json_encode($kelas);
+        $ta = $tahun_mulai . '-' . $tahun_berakhir;
 
-        // Tambah kode_guru
-        $queryKode = "SELECT MAX(id) AS max_id FROM guru";
+        // Cek apakah kelas sudah ada di database
+        $queryValid = "SELECT * FROM kelas WHERE nama='$nama' AND ta='$ta'";
+        $resultValid = mysqli_query($koneksi, $queryValid);
+        if (mysqli_num_rows($resultValid) > 0) {
+            echo "<script>alert('Kelas sudah ada di database.'); window.location.href = './crud-user.php';</script>";
+            exit();
+        }
+
+        // Tambah kode_kelas
+        $queryKode = "SELECT MAX(id) AS max_id FROM kelas";
         $resultKode = mysqli_query($koneksi, $queryKode);
         $rowKode = mysqli_fetch_assoc($resultKode);
         $idKode = $rowKode['max_id'] + 1;
-        $kode_guru = 'GUR' . str_pad($idKode, 5, '0', STR_PAD_LEFT);
-
-        // // Cek apakah data siswa sudah ada
-        // $queryValid = "SELECT * FROM guru WHERE nama='$nama' AND mapel='$mapel' AND no_telp='$no_telp'";
-        // $resultValid = mysqli_query($koneksi, $queryValid);
-        // if (mysqli_num_rows($resultValid) > 0) {
-        //     // Jika data siswa sudah ada, tampilkan pesan error
-        //     echo "<script>alert('Data siswa sudah ada.'); window.location.href = './crud-guru.php';</script>";
-        //     exit();
-        // }
+        $kode_kelas = 'KEL' . str_pad($idKode, 5, '0', STR_PAD_LEFT);
 
         // Lakukan query insert ke database
-        $query = "INSERT INTO guru (kode_guru, nama, mapel, kelas, jkelamin, no_telp, alamat) VALUES ('$kode_guru', '$nama', '$mapel', '$kelas_json', '$jkelamin', '$no_telp', '$alamat')";
+        $query = "INSERT INTO kelas (kode_kelas, nama, ta) VALUES ('$kode_kelas', '$nama', '$ta')";
         mysqli_query($koneksi, $query);
 
         // Refresh halaman agar perubahan terlihat
-        header("Location: ./crud-guru.php");
+        header("Location: ./crud-kelas.php");
         exit();
     }
 
     if (isset($_POST['update'])) {
         $id = $_POST['id'];
         $nama = $_POST['nama'];
-        $mapel = $_POST['mapel'];
-        $jkelamin = $_POST['jkelamin'];
-        $no_telp = $_POST['no_telp'];
-        $alamat = $_POST['alamat'];
-        $kelas = $_POST['kelas'] ?? []; // Menggunakan array kosong jika $_POST['kelas'] tidak ada
+        $tahun_mulai = $_POST['tahun_mulai'];
+        $tahun_berakhir = $_POST['tahun_berakhir'];
 
-        $kelas_json = json_encode($kelas, true);
+        $ta = $tahun_mulai . '-' . $tahun_berakhir;
 
-
-        // // Cek apakah data siswa sudah ada
-        // $queryValid = "SELECT * FROM guru WHERE id='$id' AND nama='$nama' AND mapel='$mapel' AND no_telp='$no_telp'";
-        // $resultValid = mysqli_query($koneksi, $queryValid);
-        // if (mysqli_num_rows($resultValid) > 0) {
-        //     // Jika data siswa sudah ada, tampilkan pesan error
-        //     echo "<script>alert('Data siswa sudah ada.'); window.location.href = './crud-guru.php';</script>";
-        //     exit();
-        // }
+        // Cek apakah kelas sudah ada di database
+        $queryValid = "SELECT * FROM kelas WHERE nama='$nama' AND ta='$ta' AND id != '$id'";
+        $resultValid = mysqli_query($koneksi, $queryValid);
+        if (mysqli_num_rows($resultValid) > 0) {
+            echo "<script>alert('Kelas sudah ada di database.'); window.location.href = './crud-kelas.php';</script>";
+            exit();
+        }
 
         // Lakukan query update ke database
-        $query = "UPDATE guru SET nama='$nama', mapel='$mapel', kelas='$kelas_json', jkelamin='$jkelamin', no_telp='$no_telp', alamat='$alamat' WHERE id='$id'";
+        $query = "UPDATE kelas SET nama='$nama', ta='$ta' WHERE id='$id'";
         mysqli_query($koneksi, $query);
 
         // Refresh halaman agar perubahan terlihat
-        header("Location: ./crud-guru.php");
+        header("Location: ./crud-kelas.php");
         exit();
     }
 
@@ -118,11 +95,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $id = $_POST['id'];
 
         // Lakukan query delete ke database
-        $query = "DELETE FROM guru WHERE id='$id'";
+        $query = "DELETE FROM kelas WHERE id='$id'";
         mysqli_query($koneksi, $query);
 
         // Refresh halaman agar perubahan terlihat
-        header("Location: ./crud-guru.php");
+        header("Location: ./crud-kelas.php");
         exit();
     }
 }
@@ -141,8 +118,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
     <script src="../../config/tailwind.config.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css" rel="stylesheet" />
-    <link href="../../assets/css/multi-select.css" rel="stylesheet" />
     <style>
         /* Compiled dark classes from Tailwind */
         .dark .dark\:divide-gray-700> :not([hidden])~ :not([hidden]) {
@@ -315,52 +290,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             <div class="h-full ml-14 mt-14 mb-10 md:ml-64">
                 <div class="container p-4">
-                    <h1 class="text-2xl font-bold mb-4">CRUD Guru</h1>
-                    <!-- Form Create Guru -->
+                    <h1 class="text-2xl font-bold mb-4">CRUD Kelas</h1>
+                    <!-- Form Create Kelas -->
                     <form method="post" class="mb-4 rounded text-black dark:text-white">
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 ">
-                            <input type="text" name="nama" placeholder="Nama" required class="rounded px-2 py-1 bg-slate-50 dark:bg-gray-900">
-                            <?php
-                            $mapel = ['IPA', 'IPS', 'Matematika', 'Bahasa Indonesia', 'Bahasa Inggris', 'PKN', 'Sejarah', 'Informatika', 'Pemrograman', 'Jaringan', 'Penjas', 'SBK', 'Konsentrasi Keahlian', 'Pendidikan Agama'];
-                            ?>
-
-                            <select name="mapel" id="mapel" class="rounded px-2 py-1 bg-slate-50 dark:bg-gray-900">
-                                <option value="pilih mapel" disabled selected>Pilih Mata Pelajaran</option>
-                                <?php foreach ($mapel as $mata_pelajaran) { ?>
-                                    <option value="<?php echo $mata_pelajaran; ?>"><?php echo $mata_pelajaran; ?></option>
-                                <?php } ?>
-                            </select>
-
-                            <select name="kelas" data-placeholder="Pilih Kelas" multiple data-multi-select autocomplete="off" class="rounded px-2 py-1 bg-slate-50 dark:bg-gray-900 block w-full cursor-pointer focus:outline-none">
-                                <?php
-                                if ($resultKelas->num_rows > 0) {
-                                    while ($row = $resultKelas->fetch_assoc()) {
-                                        // echo '<option value="" selected disabled>Pilih Kelas</option>';
-                                        echo '<option value="' . $row['kode_kelas'] . '">' . $row['kode_kelas'] . ' ' . $row['nama'] . '</option>';
-                                    }
-                                } else {
-                                    echo '<option value="">Tidak ada kelas</option>';
-                                }
-                                ?>
-                            </select>
-
-                            <select name="jkelamin" id="jkelamin" class="rounded px-2 py-1 bg-slate-50 dark:bg-gray-900">
-                                <option value="pilih jkelamin" disabled selected>Pilih Jenis Kelamin</option>
-                                <option value="L">Laki-laki</option>
-                                <option value="P">Perempuan</option>
-                            </select>
-                            <input type="telp" name="no_telp" placeholder="No. Telp" required class="rounded px-2 py-1 bg-slate-50 dark:bg-gray-900">
-                            <textarea name="alamat" placeholder="Alamat" required class="rounded px-2 py-1 bg-slate-50 dark:bg-gray-900"></textarea>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            <input type="text" name="nama" placeholder="Nama Kelas" required class="rounded px-2 py-1 bg-white dark:bg-gray-900">
+                            <input type="number" id="tahun_mulai" min="2000" max="<?php echo date('Y'); ?>" name="tahun_mulai" placeholder="Tahun Mulai" required class="rounded px-2 py-1 bg-white dark:bg-gray-900">
+                            <input type="number" id="tahun_berakhir" min="2000" max="<?php echo date('Y'); ?>" name="tahun_berakhir" placeholder="Tahun Berakhir" required class="rounded px-2 py-1 bg-white dark:bg-gray-900">
                         </div>
-                        <button type="submit" name="submit" class="bg-gray-900 mt-4 w-full hover:bg-gray-800 text-white font-bold p-4 rounded">Tambah Guru</button>
+                        <button type="submit" name="submit" class="w-full p-4 mt-4 bg-gray-900 hover:bg-gray-800 text-white font-bold rounded">Tambah Kelas</button>
                     </form>
-                    <!-- End Form Create Guru -->
 
-                    <!-- Guru List -->
+                    <!-- Kelas List -->
                     <div class="text-gray-900 bg-gray-200 dark:bg-gray-900 dark:text-gray-100 rounded-md">
                         <div class="p-4 flex">
                             <h1 class="text-3xl">
-                                Guru
+                                Kelas
                             </h1>
                         </div>
                         <div class="px-3 py-4 flex justify-center">
@@ -370,59 +315,30 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                         <th class="text-left p-3 px-5">No</th>
                                         <th class="text-left p-3 px-5">Kode</th>
                                         <th class="text-left p-3 px-5">Nama</th>
-                                        <th class="text-left p-3 px-5">Mapel</th>
-                                        <th class="text-left p-3 px-5">Kelas</th>
-                                        <th class="text-left p-3 px-5">Jenis Kelamin</th>
-                                        <th class="text-left p-3 px-5">No. Telp</th>
-                                        <th class="text-left p-3 px-5">Alamat</th>
+                                        <th class="text-left p-3 px-5">Tahun Mulai</th>
+                                        <th class="text-left p-3 px-5">Tahun Berakhir</th>
                                         <th class="text-left"></th>
                                         <th class="text-left"></th>
                                     </tr>
                                     <tbody>
-                                        <?php while ($guru = mysqli_fetch_assoc($resultGuru)) : ?>
+                                        <?php while ($kelas = mysqli_fetch_assoc($resultKelas)) : ?>
+                                            <?php
+                                            list($ta_mulai, $ta_berakhir) = explode('-', $kelas['ta']);
+                                            ?>
                                             <tr class="border-b hover:bg-orange-100 bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-700">
                                                 <td class="p-3 px-5 font-bold"><?php echo $nomor++; ?></td>
-                                                <td class="p-3 px-5 font-bold"><?php echo $guru['kode_guru']; ?></td>
+                                                <td class="p-3 px-5 font-bold"><?php echo $kelas['kode_kelas']; ?></td>
                                                 <form method="post">
-                                                    <input type="hidden" name="id" value="<?php echo $guru['id']; ?>">
-                                                    <td class="p-3 px-5"><input type="text" name="nama" value="<?php echo $guru['nama']; ?>" class="bg-transparent"></td>
-                                                    <td class="p-3 px-5">
-                                                        <select name="mapel" class="bg-gray-800 text-white">
-                                                            <?php foreach ($mapel as $mata_pelajaran) { ?>
-                                                                <option value="<?php echo $mata_pelajaran; ?>" <?php echo ($guru['mapel'] == $mata_pelajaran) ? 'selected' : ''; ?>><?php echo $mata_pelajaran; ?></option>
-                                                            <?php } ?>
-                                                        </select>
-                                                    </td>
-                                                    <td class="p-3 px-8">
-                                                        <select name="kelas" data-placeholder="Kelas" data-width="300px" data-height="50px" multiple data-multi-select data-kelas autocomplete="off" class="rounded px-2 py-1 bg-slate-50 dark:bg-gray-900 block w-full cursor-pointer focus:outline-none">
-                                                            <?php
-                                                            $kelasGuru = json_decode($guru['kelas'], true);
-
-                                                            foreach ($kelasList as $kode_kelas) { 
-                                                                $selected = in_array($kode_kelas, $kelasGuru) ? 'selected' : ''; 
-                                                            ?>
-                                                                <option value='<?php echo $kode_kelas ?>' <?php echo $selected ?>><?php echo $kode_kelas ?></option>";
-                                                            <?php } ?>
-                                                        </select>
-                                                    </td>
-                                                    <td class="p-3 px-5">
-                                                        <select name="jkelamin" class="bg-gray-800 text-white">
-                                                            <option value="L" <?php echo ($guru['jkelamin'] == 'L') ? 'selected' : ''; ?>>Laki-laki</option>
-                                                            <option value="P" <?php echo ($guru['jkelamin'] == 'P') ? 'selected' : ''; ?>>Perempuan</option>
-                                                        </select>
-                                                    </td>
-                                                    <td class="p-3 px-5">
-                                                        <input type="telp" name="no_telp" value="<?php echo $guru['no_telp']; ?>" class="bg-transparent">
-                                                    </td>
-                                                    <td class="p-3 px-5">
-                                                        <input name="alamat" value="<?php echo $guru['alamat']; ?>" class="bg-transparent">
-                                                    </td>
+                                                    <input type="hidden" name="id" value="<?php echo $kelas['id']; ?>">
+                                                    <td class="p-3 px-5"><input type="text" name="nama" value="<?php echo $kelas['nama']; ?>" class="bg-transparent"></td>
+                                                    <td class="p-3 px-5"><input type="number" id="tahun_awal" min="2000" max="<?php echo date('Y'); ?>" name="tahun_mulai" value="<?php echo $ta_mulai; ?>" class="bg-transparent"></td>
+                                                    <td class="p-3 px-5"><input type="number" id="tahun_berakhir" min="<?php echo $ta_mulai; ?>" max="<?php echo date('Y'); ?>" name="tahun_berakhir" value="<?php echo $ta_berakhir; ?>" class="bg-transparent"></td>
                                                     <td class="p-3">
                                                         <button type="submit" name="update" class="text-sm bg-blue-500 hover:bg-blue-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline w-full">Save</button>
                                                     </td>
                                                 </form>
                                                 <form method="post">
-                                                    <input type="hidden" name="id" value="<?php echo $guru['id']; ?>">
+                                                    <input type="hidden" name="id" value="<?php echo $kelas['id']; ?>">
                                                     <td class="p-3">
                                                         <button type="submit" name="delete" class="text-sm bg-red-500 hover:bg-red-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline w-full">Delete</button>
                                                     </td>
@@ -433,7 +349,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 </table>
 
                                 <!-- Pagination -->
-                                <div x-data="{ currentPage: <?php echo $currentPage; ?>, lastPage: <?php echo $lastPage; ?> }" class="text-center m-8 dark:text-black">
+                                <div x-data="{ currentPage: <?php echo $currentPage; ?>, lastPage: <?php echo $lastPage; ?> }" class="text-center m-4 dark:text-black">
                                     <a x-bind:href="'?page=' + (currentPage > 1 ? currentPage - 1 : 1)" class="inline-block bg-gray-200 hover:bg-gray-300 rounded px-3 py-1 mr-2">
                                         <button @click="currentPage = currentPage > 1 ? currentPage - 1 : 1" class="focus:outline-none">Previous</button>
                                     </a>
@@ -442,12 +358,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                         <button @click="currentPage = currentPage < lastPage ? currentPage + 1 : lastPage" class="focus:outline-none">Next</button>
                                     </a>
                                 </div>
-                                <!-- End Pagination -->
-
                             </div>
                         </div>
                     </div>
-                    <!-- End Siswa List -->
                 </div>
             </div>
         </div>
@@ -478,9 +391,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
         }
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
-    <script src="../../assets/js/multi-select.js" defer></script>
+    <script>
+        // Ambil semua elemen input tahun mulai dan tahun berakhir
+        var tahunMulaiInputs = document.querySelectorAll('input[name="tahun_mulai"]');
+        var tahunBerakhirInputs = document.querySelectorAll('input[name="tahun_berakhir"]');
 
+        // Tambahkan event listener untuk setiap input tahun mulai
+        tahunMulaiInputs.forEach(function(tahunMulaiInput, index) {
+            // Ketika nilai input tahun mulai berubah
+            tahunMulaiInput.addEventListener('change', function() {
+                // Set nilai min pada input tahun berakhir terkait
+                tahunBerakhirInputs[index].min = tahunMulaiInput.value;
+                // Reset nilai input tahun berakhir jika nilainya lebih kecil dari tahun mulai yang baru
+                if (parseInt(tahunBerakhirInputs[index].value) < parseInt(tahunMulaiInput.value)) {
+                    tahunBerakhirInputs[index].value = tahunMulaiInput.value;
+                }
+            });
+        });
+    </script>
 </body>
 
 </html>

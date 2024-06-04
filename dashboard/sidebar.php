@@ -8,7 +8,7 @@ if ($user_role == 'super_admin' || $user_role == 'admin') {
         ['url' => '/akademik-andika/dashboard/admin/crud-user.php', 'label' => 'User', 'icon' => 'people-outline'],
         ['url' => '/akademik-andika/dashboard/admin/crud-siswa.php', 'label' => 'Siswa', 'icon' => 'people-outline'],
         ['url' => '/akademik-andika/dashboard/admin/crud-guru.php', 'label' => 'Guru', 'icon' => 'people-outline'],
-        ['url' => '/akademik-andika/dashboard/admin/kelas/', 'label' => 'Kelas', 'icon' => 'people-outline'],
+        ['url' => '/akademik-andika/dashboard/admin/crud-kelas.php', 'label' => 'Kelas', 'icon' => 'people-outline'],
     ];
 } else {
     $menu_items = [
