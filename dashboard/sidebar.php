@@ -35,11 +35,11 @@ if ($user_role == 'super_admin' || $user_role == 'admin') {
                     </a>
                 </li>
             <?php endforeach; ?>
-            <li class="px-5 hidden md:block">
+            <!-- <li class="px-5 hidden md:block">
                 <div class="flex flex-row items-center h-8">
                     <div class="text-sm font-light tracking-wide text-gray-400 uppercase">Admin</div>
                 </div>
-            </li>
+            </li> -->
         </ul>
     </div>
 </div>

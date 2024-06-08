@@ -38,11 +38,11 @@ body {
     margin: auto;
 }
 
-.main-container:hover {
+/* .main-container:hover {
     padding: 1.5rem;
     width: 450px;
     height: 325px;
-}
+} */
 
 .main-container h1 {
     text-align: center;

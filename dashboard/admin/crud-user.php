@@ -318,22 +318,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                         <?php while ($admin = mysqli_fetch_assoc($resultAdmin)) : ?>
                                             <tr class="border-b hover:bg-orange-100 bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-700">
                                                 <td class="p-3 px-5 font-bold"><?php echo $nomor++; ?></td>
-                                                <form method="post">
-                                                    <input type="hidden" name="id" value="<?php echo $admin['id']; ?>">
-                                                    <td class="p-3 px-5"><input type="text" name="username" value="<?php echo $admin['username']; ?>" class="bg-transparent"></td>
-                                                    <td class="p-3 px-5"><input type="text" name="email" value="<?php echo $admin['email']; ?>" class="bg-transparent"></td>
-                                                    <td class="p-3 px-5">
-                                                        <select name="role" class="bg-gray-800 text-white">
-                                                            <option value="user" <?php echo ($admin['role'] == 'user') ? 'selected' : ''; ?>>user</option>
-                                                            <option value="admin" <?php echo ($admin['role'] == 'admin') ? 'selected' : ''; ?>>admin</option>
-                                                            <option value="super_admin" <?php echo ($admin['role'] == 'super_admin') ? 'selected' : ''; ?>>super_admin</option>
-                                                        </select>
-                                                    </td>
-                                                    <td class="p-3 px-5"><input type="password" name="password" value="<?php echo $admin['password']; ?>" class="bg-transparent"></td>
-                                                    <td class="p-3">
-                                                        <button type="submit" name="update" class="text-sm bg-blue-500 hover:bg-blue-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline w-full">Save</button>
-                                                    </td>
-                                                </form>
+                                                <td class="p-3 px-5"><?php echo $admin['username']; ?></td>
+                                                <td class="p-3 px-5"><?php echo $admin['email']; ?></td>
+                                                <td class="p-3 px-5"><?php echo $admin['role']; ?></td>
+                                                <td class="p-3 px-5"><input type="password" name="password" disabled value="<?php echo $admin['password']; ?>" class="bg-transparent"></td>
+                                                <td class="p-3 px-2">
+                                                    <a href="edit-user.php?id=<?php echo $admin['id']; ?>" class="text-sm bg-blue-500 hover:bg-blue-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline w-full text-center">Edit</a>
+                                                </td>
                                                 <form method="post">
                                                     <input type="hidden" name="id" value="<?php echo $admin['id']; ?>">
                                                     <td class="p-3">

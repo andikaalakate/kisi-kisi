@@ -17,52 +17,59 @@ if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'super_admin' && $_SESSI
 }
 
 include '../../config/koneksi.php';
-// Query untuk menghitung total guru
-$sqlGuru = "SELECT COUNT(*) as total_guru FROM guru";
-$resultGuru = $koneksi->query($sqlGuru);
 
-// Ambil hasil query total guru
-if ($resultGuru->num_rows > 0) {
-    $rowGuru = $resultGuru->fetch_assoc();
-    $total_guru = $rowGuru['total_guru'];
+// Inisialisasi nomor urut
+$nomor = 1;
+
+// Ambil ID dari URL
+$id = $_GET['id'];
+
+$query = "SELECT * FROM admin WHERE id = $id";
+$resultAdmin = mysqli_query($koneksi, $query);
+
+// Periksa apakah data ditemukan
+if (mysqli_num_rows($resultAdmin) > 0) {
+    $admin = mysqli_fetch_assoc($resultAdmin);
 } else {
-    $total_guru = 0;
+    echo "Data tidak ditemukan.";
+    exit;
 }
 
-// Query untuk menghitung total siswa
-$sqlSiswa = "SELECT COUNT(*) as total_siswa FROM siswa";
-$resultSiswa = $koneksi->query($sqlSiswa);
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-// Ambil hasil query total siswa
-if ($resultSiswa->num_rows > 0) {
-    $rowSiswa = $resultSiswa->fetch_assoc();
-    $total_siswa = $rowSiswa['total_siswa'];
-} else {
-    $total_siswa = 0;
-}
+    if (isset($_POST['update'])) {
+        $id = $_POST['id'];
+        $name = $_POST['username'];
+        $email = $_POST['email'];
+        $role = $_POST['role'];
+        $password = md5($_POST['password']);
 
-// Query untuk menghitung total siswa
-$sqlKelas = "SELECT COUNT(*) as total_kelas FROM kelas";
-$resultKelas = $koneksi->query($sqlKelas);
+        // Query update tanpa password
+        $query = "UPDATE admin SET username='$name', email='$email', role='$role' WHERE id='$id'";
 
-// Ambil hasil query total siswa
-if ($resultKelas->num_rows > 0) {
-    $rowKelas = $resultKelas->fetch_assoc();
-    $total_kelas = $rowKelas['total_kelas'];
-} else {
-    $total_kelas = 0;
-}
+        // Jika password tidak kosong, tambahkan ke query
+        if (!empty($password)) {
+            $query = "UPDATE admin SET username='$name', email='$email', role='$role', password='$password' WHERE id='$id'";
+        }
 
-// Query untuk menghitung total siswa
-$sqlUser = "SELECT COUNT(*) as total_user FROM admin";
-$resultUser = $koneksi->query($sqlUser);
+        mysqli_query($koneksi, $query);
 
-// Ambil hasil query total siswa
-if ($resultUser->num_rows > 0) {
-    $rowUser = $resultUser->fetch_assoc();
-    $total_user = $rowUser['total_user'];
-} else {
-    $total_user = 0;
+        // Refresh halaman agar perubahan terlihat
+        header("Location: ./crud-user.php");
+        exit();
+    }
+
+    if (isset($_POST['delete'])) {
+        $id = $_POST['id'];
+
+        // Lakukan query delete ke database
+        $query = "DELETE FROM admin WHERE id='$id'";
+        mysqli_query($koneksi, $query);
+
+        // Refresh halaman agar perubahan terlihat
+        header("Location: ./crud-user.php");
+        exit();
+    }
 }
 
 // $koneksi->close();
@@ -250,54 +257,37 @@ if ($resultUser->num_rows > 0) {
             <!-- ./Sidebar -->
 
             <div class="h-full ml-14 mt-14 mb-10 md:ml-64">
-                <!-- Statistics Cards -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 p-4 gap-4">
-                    <div class="bg-blue-500 dark:bg-gray-800 shadow-lg rounded-md flex items-center justify-between p-3 border-b-4 border-blue-600 dark:border-gray-600 text-white font-medium group">
-                        <div class="flex justify-center items-center w-14 h-14 bg-white rounded-full transition-all duration-300 transform group-hover:rotate-12">
-                            <svg width="30" height="30" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="stroke-current text-blue-800 dark:text-gray-800 transform transition-transform duration-500 ease-in-out">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                            </svg>
+                <div class="container p-4">
+                    <h1 class="text-2xl font-bold mb-4">CRUD User</h1>
+
+                    <form method="post" class="mb-4 p-4 bg-gray-100 dark:bg-gray-800 rounded text-black dark:text-white shadow-lg">
+                        <input type="text" hidden name="id" value="<?php echo $admin['id'] ?>">
+                        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                            <div class="flex flex-col">
+                                <label for="username" class="mb-2 font-semibold">Username</label>
+                                <input type="text" id="username" name="username" value="<?php echo $admin['username'] ?>" placeholder="Username" required class="rounded px-2 py-1 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div class="flex flex-col">
+                                <label for="email" class="mb-2 font-semibold">Email</label>
+                                <input type="email" id="email" name="email" value="<?php echo $admin['email'] ?>" placeholder="Email" required class="rounded px-2 py-1 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div class="flex flex-col">
+                                <label for="role" class="mb-2 font-semibold">Role</label>
+                                <select name="role" id="role" class="rounded px-2 py-1 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="user" <?php echo ($admin['role'] == 'user') ? 'selected' : ''; ?>>User</option>
+                                    <option value="admin" <?php echo ($admin['role'] == 'admin') ? 'selected' : ''; ?>>Admin</option>
+                                    <option value="super_admin" <?php echo ($admin['role'] == 'super_admin') ? 'selected' : ''; ?>>Super Admin</option>
+                                </select>
+                            </div>
+                            <div class="flex flex-col">
+                                <label for="password" class="mb-2 font-semibold">Password</label>
+                                <input type="password" id="password" name="password" placeholder="Biarkan kosong jika tidak ingin diubah" class="rounded px-2 py-1 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
                         </div>
-                        <div class="text-right">
-                            <p class="text-2xl"><?php echo $total_user ?></p>
-                            <p>User</p>
-                        </div>
-                    </div>
-                    <div class="bg-blue-500 dark:bg-gray-800 shadow-lg rounded-md flex items-center justify-between p-3 border-b-4 border-blue-600 dark:border-gray-600 text-white font-medium group">
-                        <div class="flex justify-center items-center w-14 h-14 bg-white rounded-full transition-all duration-300 transform group-hover:rotate-12">
-                            <svg width="30" height="30" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="stroke-current text-blue-800 dark:text-gray-800 transform transition-transform duration-500 ease-in-out">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                            </svg>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-2xl"><?php echo $total_guru ?></p>
-                            <p>Guru</p>
-                        </div>
-                    </div>
-                    <div class="bg-blue-500 dark:bg-gray-800 shadow-lg rounded-md flex items-center justify-between p-3 border-b-4 border-blue-600 dark:border-gray-600 text-white font-medium group">
-                        <div class="flex justify-center items-center w-14 h-14 bg-white rounded-full transition-all duration-300 transform group-hover:rotate-12">
-                            <svg width="30" height="30" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="stroke-current text-blue-800 dark:text-gray-800 transform transition-transform duration-500 ease-in-out">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                            </svg>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-2xl"><?php echo $total_siswa ?></p>
-                            <p>Siswa</p>
-                        </div>
-                    </div>
-                    <div class="bg-blue-500 dark:bg-gray-800 shadow-lg rounded-md flex items-center justify-between p-3 border-b-4 border-blue-600 dark:border-gray-600 text-white font-medium group">
-                        <div class="flex justify-center items-center w-14 h-14 bg-white rounded-full transition-all duration-300 transform group-hover:rotate-12">
-                            <svg width="30" height="30" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="stroke-current text-blue-800 dark:text-gray-800 transform transition-transform duration-500 ease-in-out">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                            </svg>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-2xl"><?php echo $total_kelas ?></p>
-                            <p>Kelas</p>
-                        </div>
-                    </div>
+                        <button type="submit" name="update" class="w-full p-4 mt-4 bg-blue-700 hover:bg-blue-800 text-white font-bold rounded">Update User</button>
+                    </form>
+
                 </div>
-                <!-- ./Statistics Cards -->
             </div>
         </div>
     </div>

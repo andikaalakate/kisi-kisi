@@ -348,38 +348,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                             <tr class="border-b hover:bg-orange-100 bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-700">
                                                 <td class="p-3 px-5 font-bold"><?php echo $nomor++; ?></td>
                                                 <td class="p-3 px-5 font-bold"><?php echo $siswa['kode_siswa']; ?></td>
-                                                <form method="post">
-                                                    <input type="hidden" name="id" value="<?php echo $siswa['id']; ?>">
-                                                    <td class="p-3 px-5"><input type="text" name="nama" value="<?php echo $siswa['nama']; ?>" class="bg-transparent"></td>
-                                                    <td class="p-3 px-5">
-                                                        <select name="jkelamin" class="bg-gray-800 text-white">
-                                                            <option value="L" <?php echo ($siswa['jkelamin'] == 'L') ? 'selected' : ''; ?>>Laki-laki</option>
-                                                            <option value="P" <?php echo ($siswa['jkelamin'] == 'P') ? 'selected' : ''; ?>>Perempuan</option>
-                                                        </select>
-                                                    </td>
-                                                    <td class="p-3 px-5">
-                                                        <select name="kelas" class="bg-gray-800 text-white">
-                                                            <option value="10" <?php echo ($siswa['kelas'] == '10') ? 'selected' : ''; ?>>X (10)</option>
-                                                            <option value="11" <?php echo ($siswa['kelas'] == '11') ? 'selected' : ''; ?>>XI (11)</option>
-                                                            <option value="12" <?php echo ($siswa['kelas'] == '12') ? 'selected' : ''; ?>>XII (12)</option>
-                                                        </select>
-                                                    </td>
-                                                    <td class="p-3 px-5">
-                                                        <select name="jurusan" class="bg-gray-800 text-white">
-                                                            <option value="RPL" <?php echo ($siswa['jurusan'] == 'RPL') ? 'selected' : ''; ?>>Rekayasa Perangkat Lunak</option>
-                                                            <option value="TJKT" <?php echo ($siswa['jurusan'] == 'TJKT') ? 'selected' : ''; ?>>Teknik Jaringan Komputer dan Telekomunikasi</option>
-                                                            <option value="MPLB" <?php echo ($siswa['jurusan'] == 'MPLB') ? 'selected' : ''; ?>>Manajemen Perkantoran dan Layanan Bisnis</option>
-                                                            <option value="PM" <?php echo ($siswa['jurusan'] == 'PM') ? 'selected' : ''; ?>>Pemasaran</option>
-                                                            <option value="AKL" <?php echo ($siswa['jurusan'] == 'AKL') ? 'selected' : ''; ?>>Akuntansi dan Keuangan Lembaga</option>
-                                                        </select>
-                                                    </td>
-                                                    <td class="p-3 px-5">
-                                                        <input type="telp" name="no_telp" value="<?php echo $siswa['no_telp']; ?>" class="bg-transparent">
-                                                    </td>
-                                                    <td class="p-3">
-                                                        <button type="submit" name="update" class="text-sm bg-blue-500 hover:bg-blue-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline w-full">Save</button>
-                                                    </td>
-                                                </form>
+                                                <td class="p-3 px-5"><?php echo $siswa['nama']; ?></td>
+                                                <td class="p-3 px-5">
+                                                    <?php echo ($siswa['jkelamin'] == 'L') ? 'Laki-Laki' : 'Perempuan' ?>
+                                                </td>
+                                                <td class="p-3 px-5">
+                                                    <?php echo $siswa['kelas']; ?>
+                                                </td>
+                                                <td class="p-3 px-5">
+                                                    <?php echo $siswa['jurusan'];?>
+                                                </td>
+                                                <td class="p-3 px-5">
+                                                    <?php echo $siswa['no_telp']; ?>
+                                                </td>
+                                                <td class="p-3">
+                                                    <a href="edit-siswa.php?id=<?php echo $siswa['id']; ?>" class="text-sm bg-blue-500 hover:bg-blue-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline w-full text-center">Edit</a>
+                                                </td>
                                                 <form method="post">
                                                     <input type="hidden" name="id" value="<?php echo $siswa['id']; ?>">
                                                     <td class="p-3">

@@ -17,52 +17,50 @@ if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'super_admin' && $_SESSI
 }
 
 include '../../config/koneksi.php';
-// Query untuk menghitung total guru
-$sqlGuru = "SELECT COUNT(*) as total_guru FROM guru";
-$resultGuru = $koneksi->query($sqlGuru);
 
-// Ambil hasil query total guru
-if ($resultGuru->num_rows > 0) {
-    $rowGuru = $resultGuru->fetch_assoc();
-    $total_guru = $rowGuru['total_guru'];
+// Inisialisasi nomor urut
+$nomor = 1;
+
+// Ambil ID dari URL
+$id = $_GET['id'];
+
+$query = "SELECT * FROM kelas WHERE id = $id";
+$resultKelas = mysqli_query($koneksi, $query);
+
+// Periksa apakah data ditemukan
+if (mysqli_num_rows($resultKelas) > 0) {
+    $kelas = mysqli_fetch_assoc($resultKelas);
 } else {
-    $total_guru = 0;
+    echo "Data tidak ditemukan.";
+    exit;
 }
 
-// Query untuk menghitung total siswa
-$sqlSiswa = "SELECT COUNT(*) as total_siswa FROM siswa";
-$resultSiswa = $koneksi->query($sqlSiswa);
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-// Ambil hasil query total siswa
-if ($resultSiswa->num_rows > 0) {
-    $rowSiswa = $resultSiswa->fetch_assoc();
-    $total_siswa = $rowSiswa['total_siswa'];
-} else {
-    $total_siswa = 0;
-}
+    if (isset($_POST['update'])) {
+        $id = $_POST['id'];
+        $nama = $_POST['nama'];
+        $tahun_mulai = $_POST['tahun_mulai'];
+        $tahun_berakhir = $_POST['tahun_berakhir'];
 
-// Query untuk menghitung total siswa
-$sqlKelas = "SELECT COUNT(*) as total_kelas FROM kelas";
-$resultKelas = $koneksi->query($sqlKelas);
+        $ta = $tahun_mulai . '-' . $tahun_berakhir;
 
-// Ambil hasil query total siswa
-if ($resultKelas->num_rows > 0) {
-    $rowKelas = $resultKelas->fetch_assoc();
-    $total_kelas = $rowKelas['total_kelas'];
-} else {
-    $total_kelas = 0;
-}
+        // Cek apakah kelas sudah ada di database
+        $queryValid = "SELECT * FROM kelas WHERE nama='$nama' AND ta='$ta' AND id != '$id'";
+        $resultValid = mysqli_query($koneksi, $queryValid);
+        if (mysqli_num_rows($resultValid) > 0) {
+            echo "<script>alert('Kelas sudah ada di database.'); window.location.href = './crud-kelas.php';</script>";
+            exit();
+        }
 
-// Query untuk menghitung total siswa
-$sqlUser = "SELECT COUNT(*) as total_user FROM admin";
-$resultUser = $koneksi->query($sqlUser);
+        // Lakukan query update ke database
+        $query = "UPDATE kelas SET nama='$nama', ta='$ta' WHERE id='$id'";
+        mysqli_query($koneksi, $query);
 
-// Ambil hasil query total siswa
-if ($resultUser->num_rows > 0) {
-    $rowUser = $resultUser->fetch_assoc();
-    $total_user = $rowUser['total_user'];
-} else {
-    $total_user = 0;
+        // Refresh halaman agar perubahan terlihat
+        header("Location: ./crud-kelas.php");
+        exit();
+    }
 }
 
 // $koneksi->close();
@@ -250,54 +248,31 @@ if ($resultUser->num_rows > 0) {
             <!-- ./Sidebar -->
 
             <div class="h-full ml-14 mt-14 mb-10 md:ml-64">
-                <!-- Statistics Cards -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 p-4 gap-4">
-                    <div class="bg-blue-500 dark:bg-gray-800 shadow-lg rounded-md flex items-center justify-between p-3 border-b-4 border-blue-600 dark:border-gray-600 text-white font-medium group">
-                        <div class="flex justify-center items-center w-14 h-14 bg-white rounded-full transition-all duration-300 transform group-hover:rotate-12">
-                            <svg width="30" height="30" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="stroke-current text-blue-800 dark:text-gray-800 transform transition-transform duration-500 ease-in-out">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                            </svg>
+                <div class="container p-4">
+                    <h1 class="text-2xl font-bold mb-4">CRUD Kelas</h1>
+                    <?php
+                    list($ta_mulai, $ta_berakhir) = explode('-', $kelas['ta']);
+                    ?>
+                    <form method="post" class="mb-4 p-4 bg-gray-100 dark:bg-gray-800 rounded text-black dark:text-white shadow-lg">
+                        <input type="text" hidden name="id" value="<?php echo $kelas['id'] ?>">
+                        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                            <div class="flex flex-col">
+                                <label for="nama" class="mb-2 font-semibold">Nama Kelas</label>
+                                <input type="text" id="nama" name="nama" value="<?php echo $kelas['nama'] ?>" placeholder="nama" required class="rounded px-2 py-1 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div class="flex flex-col">
+                                <label for="tahun_mulai" class="mb-2 font-semibold">Tahun Mulai</label>
+                                <input type="number" id="tahun_mulai" name="tahun_mulai" value="<?php echo $ta_mulai ?>" min="2000" max="<?php echo date('Y'); ?>" placeholder="Tahun Mulai" required class="rounded px-2 py-1 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div class="flex flex-col">
+                                <label for="tahun_berakhir" class="mb-2 font-semibold">Tahun Berakhir</label>
+                                <input type="number" id="tahun_berakhir" min="<?php echo $ta_mulai; ?>" max="<?php echo date('Y'); ?>" name="tahun_berakhir" value="<?php echo $ta_berakhir; ?>" placeholder="Tahun Berakhir" required class="rounded px-2 py-1 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
                         </div>
-                        <div class="text-right">
-                            <p class="text-2xl"><?php echo $total_user ?></p>
-                            <p>User</p>
-                        </div>
-                    </div>
-                    <div class="bg-blue-500 dark:bg-gray-800 shadow-lg rounded-md flex items-center justify-between p-3 border-b-4 border-blue-600 dark:border-gray-600 text-white font-medium group">
-                        <div class="flex justify-center items-center w-14 h-14 bg-white rounded-full transition-all duration-300 transform group-hover:rotate-12">
-                            <svg width="30" height="30" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="stroke-current text-blue-800 dark:text-gray-800 transform transition-transform duration-500 ease-in-out">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                            </svg>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-2xl"><?php echo $total_guru ?></p>
-                            <p>Guru</p>
-                        </div>
-                    </div>
-                    <div class="bg-blue-500 dark:bg-gray-800 shadow-lg rounded-md flex items-center justify-between p-3 border-b-4 border-blue-600 dark:border-gray-600 text-white font-medium group">
-                        <div class="flex justify-center items-center w-14 h-14 bg-white rounded-full transition-all duration-300 transform group-hover:rotate-12">
-                            <svg width="30" height="30" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="stroke-current text-blue-800 dark:text-gray-800 transform transition-transform duration-500 ease-in-out">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                            </svg>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-2xl"><?php echo $total_siswa ?></p>
-                            <p>Siswa</p>
-                        </div>
-                    </div>
-                    <div class="bg-blue-500 dark:bg-gray-800 shadow-lg rounded-md flex items-center justify-between p-3 border-b-4 border-blue-600 dark:border-gray-600 text-white font-medium group">
-                        <div class="flex justify-center items-center w-14 h-14 bg-white rounded-full transition-all duration-300 transform group-hover:rotate-12">
-                            <svg width="30" height="30" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="stroke-current text-blue-800 dark:text-gray-800 transform transition-transform duration-500 ease-in-out">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                            </svg>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-2xl"><?php echo $total_kelas ?></p>
-                            <p>Kelas</p>
-                        </div>
-                    </div>
+                        <button type="submit" name="update" class="w-full p-4 mt-4 bg-blue-700 hover:bg-blue-800 text-white font-bold rounded">Update Kelas</button>
+                    </form>
+
                 </div>
-                <!-- ./Statistics Cards -->
             </div>
         </div>
     </div>
@@ -326,6 +301,25 @@ if ($resultUser->num_rows > 0) {
                 },
             }
         }
+    </script>
+
+    <script>
+        // Ambil semua elemen input tahun mulai dan tahun berakhir
+        var tahunMulaiInputs = document.querySelectorAll('input[name="tahun_mulai"]');
+        var tahunBerakhirInputs = document.querySelectorAll('input[name="tahun_berakhir"]');
+
+        // Tambahkan event listener untuk setiap input tahun mulai
+        tahunMulaiInputs.forEach(function(tahunMulaiInput, index) {
+            // Ketika nilai input tahun mulai berubah
+            tahunMulaiInput.addEventListener('change', function() {
+                // Set nilai min pada input tahun berakhir terkait
+                tahunBerakhirInputs[index].min = tahunMulaiInput.value;
+                // Reset nilai input tahun berakhir jika nilainya lebih kecil dari tahun mulai yang baru
+                if (parseInt(tahunBerakhirInputs[index].value) < parseInt(tahunMulaiInput.value)) {
+                    tahunBerakhirInputs[index].value = tahunMulaiInput.value;
+                }
+            });
+        });
     </script>
 </body>
 

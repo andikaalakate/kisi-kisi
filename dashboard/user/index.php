@@ -9,24 +9,13 @@ if (!isset($_SESSION['role'])) {
 }
 
 // Cek apakah user memiliki role yang sesuai
-if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'user')) {
+if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'guru')) {
     // Redirect atau tampilkan pesan error jika user tidak memiliki role yang sesuai
     echo "<script>alert('Anda tidak memiliki akses untuk melihat halaman ini.'); window.location.href = '../admin/';</script>";
     exit;
 }
 
 include '../../config/koneksi.php';
-// Query untuk menghitung total guru
-$sqlGuru = "SELECT COUNT(*) as total_guru FROM guru";
-$resultGuru = $koneksi->query($sqlGuru);
-
-// Ambil hasil query total guru
-if ($resultGuru->num_rows > 0) {
-    $rowGuru = $resultGuru->fetch_assoc();
-    $total_guru = $rowGuru['total_guru'];
-} else {
-    $total_guru = 0;
-}
 
 // Query untuk menghitung total siswa
 $sqlSiswa = "SELECT COUNT(*) as total_siswa FROM siswa";

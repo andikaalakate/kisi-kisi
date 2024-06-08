@@ -383,44 +383,51 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                             <tr class="border-b hover:bg-orange-100 bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-700">
                                                 <td class="p-3 px-5 font-bold"><?php echo $nomor++; ?></td>
                                                 <td class="p-3 px-5 font-bold"><?php echo $guru['kode_guru']; ?></td>
-                                                <form method="post">
-                                                    <input type="hidden" name="id" value="<?php echo $guru['id']; ?>">
-                                                    <td class="p-3 px-5"><input type="text" name="nama" value="<?php echo $guru['nama']; ?>" class="bg-transparent"></td>
-                                                    <td class="p-3 px-5">
-                                                        <select name="mapel" class="bg-gray-800 text-white">
-                                                            <?php foreach ($mapel as $mata_pelajaran) { ?>
-                                                                <option value="<?php echo $mata_pelajaran; ?>" <?php echo ($guru['mapel'] == $mata_pelajaran) ? 'selected' : ''; ?>><?php echo $mata_pelajaran; ?></option>
-                                                            <?php } ?>
-                                                        </select>
-                                                    </td>
-                                                    <td class="p-3 px-8">
-                                                        <select name="kelas" data-placeholder="Kelas" data-width="300px" data-height="50px" multiple data-multi-select data-kelas autocomplete="off" class="rounded px-2 py-1 bg-slate-50 dark:bg-gray-900 block w-full cursor-pointer focus:outline-none">
-                                                            <?php
-                                                            $kelasGuru = json_decode($guru['kelas'], true);
+                                                <td class="p-3 px-5"><input type="text" name="nama" value="<?php echo $guru['nama']; ?>" class="bg-transparent"></td>
+                                                <td class="p-3 px-5">
+                                                    <?php echo $guru['mapel']; ?>
+                                                </td>
+                                                <td class="p-3 px-8">
+                                                    <?php
+                                                    $kelasGuru = json_decode($guru['kelas'], true);
+                                                    $kelasNames = [];
 
-                                                            foreach ($kelasList as $kode_kelas) { 
-                                                                $selected = in_array($kode_kelas, $kelasGuru) ? 'selected' : ''; 
-                                                            ?>
-                                                                <option value='<?php echo $kode_kelas ?>' <?php echo $selected ?>><?php echo $kode_kelas ?></option>";
-                                                            <?php } ?>
-                                                        </select>
-                                                    </td>
-                                                    <td class="p-3 px-5">
-                                                        <select name="jkelamin" class="bg-gray-800 text-white">
-                                                            <option value="L" <?php echo ($guru['jkelamin'] == 'L') ? 'selected' : ''; ?>>Laki-laki</option>
-                                                            <option value="P" <?php echo ($guru['jkelamin'] == 'P') ? 'selected' : ''; ?>>Perempuan</option>
-                                                        </select>
-                                                    </td>
-                                                    <td class="p-3 px-5">
-                                                        <input type="telp" name="no_telp" value="<?php echo $guru['no_telp']; ?>" class="bg-transparent">
-                                                    </td>
-                                                    <td class="p-3 px-5">
-                                                        <input name="alamat" value="<?php echo $guru['alamat']; ?>" class="bg-transparent">
-                                                    </td>
-                                                    <td class="p-3">
-                                                        <button type="submit" name="update" class="text-sm bg-blue-500 hover:bg-blue-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline w-full">Save</button>
-                                                    </td>
-                                                </form>
+                                                    // Mengambil nama kelas dari tabel kelas untuk setiap kode_kelas dalam array $kelasGuru
+                                                    foreach ($kelasGuru as $kodeKelas) {
+                                                        // Misalkan Anda memiliki koneksi database yang telah dibuat sebelumnya
+                                                        $query = "SELECT nama FROM kelas WHERE kode_kelas = '$kodeKelas'";
+                                                        $result = mysqli_query($koneksi, $query);
+
+                                                        if ($result) {
+                                                            $row = mysqli_fetch_assoc($result);
+                                                            $namaKelas = $row['nama'];
+                                                            $kelasNames[] = $namaKelas;
+                                                        }
+                                                    }
+
+                                                    // Menampilkan nama kelas dengan menggunakan span dan memberikan margin kanan
+                                                    foreach ($kelasNames as $index => $namaKelas) {
+                                                        echo '<span>' . $namaKelas . '</span>';
+                                                        // Jika bukan kelas terakhir, tambahkan koma dan spasi
+                                                        if ($index < count($kelasNames) - 1) {
+                                                            echo ', ';
+                                                        }
+                                                    }
+                                                    ?>
+                                                </td>
+
+                                                <td class="p-3 px-5">
+                                                    <?php echo ($guru['jkelamin'] == 'L') ? 'Laki-Laki' : 'Perempuan' ?>
+                                                </td>
+                                                <td class="p-3 px-5">
+                                                    <?php echo $guru['no_telp']; ?>
+                                                </td>
+                                                <td class="p-3 px-5">
+                                                    <?php echo $guru['alamat']; ?>
+                                                </td>
+                                                <td class="p-3">
+                                                    <a href="edit-guru.php?id=<?php echo $guru['id']; ?>" class="text-sm bg-blue-500 hover:bg-blue-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline w-full text-center">Edit</a>
+                                                </td>
                                                 <form method="post">
                                                     <input type="hidden" name="id" value="<?php echo $guru['id']; ?>">
                                                     <td class="p-3">

@@ -328,15 +328,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                             <tr class="border-b hover:bg-orange-100 bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-700">
                                                 <td class="p-3 px-5 font-bold"><?php echo $nomor++; ?></td>
                                                 <td class="p-3 px-5 font-bold"><?php echo $kelas['kode_kelas']; ?></td>
-                                                <form method="post">
-                                                    <input type="hidden" name="id" value="<?php echo $kelas['id']; ?>">
-                                                    <td class="p-3 px-5"><input type="text" name="nama" value="<?php echo $kelas['nama']; ?>" class="bg-transparent"></td>
-                                                    <td class="p-3 px-5"><input type="number" id="tahun_awal" min="2000" max="<?php echo date('Y'); ?>" name="tahun_mulai" value="<?php echo $ta_mulai; ?>" class="bg-transparent"></td>
-                                                    <td class="p-3 px-5"><input type="number" id="tahun_berakhir" min="<?php echo $ta_mulai; ?>" max="<?php echo date('Y'); ?>" name="tahun_berakhir" value="<?php echo $ta_berakhir; ?>" class="bg-transparent"></td>
+                                                    <td class="p-3 px-5"><?php echo $kelas['nama']; ?></td>
+                                                    <td class="p-3 px-5"><?php echo $ta_mulai; ?></td>
+                                                    <td class="p-3 px-5"><?php echo $ta_berakhir; ?></td>
                                                     <td class="p-3">
-                                                        <button type="submit" name="update" class="text-sm bg-blue-500 hover:bg-blue-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline w-full">Save</button>
+                                                        <a href="edit-kelas.php?id=<?php echo $kelas['id']; ?>" class="text-sm bg-blue-500 hover:bg-blue-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline w-full text-center">Edit</a>
                                                     </td>
-                                                </form>
                                                 <form method="post">
                                                     <input type="hidden" name="id" value="<?php echo $kelas['id']; ?>">
                                                     <td class="p-3">

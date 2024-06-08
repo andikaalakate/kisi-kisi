@@ -10,7 +10,11 @@ if (isset($_SESSION['role']) && ($_SESSION['role'] == 'super_admin' || $_SESSION
     // Jika role tidak sesuai, bisa dilakukan aksi lain, seperti redirect ke halaman lain atau menampilkan pesan kesalahan
     header('Location: ./user/');
     exit();
+} elseif (isset($_SESSION['role']) && ($_SESSION['role'] == 'guru')) {
+    // Jika role tidak sesuai, bisa dilakukan aksi lain, seperti redirect ke halaman lain atau menampilkan pesan kesalahan
+    header('Location: ./user/');
+    exit();
 } else {
-    header('Location: /kisi-kisi/login');
+    header('Location: ../../login');
     exit();
 }
