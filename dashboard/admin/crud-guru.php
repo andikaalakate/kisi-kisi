@@ -48,82 +48,53 @@ while ($kelasRow = mysqli_fetch_assoc($kelasResult)) {
     $kelasList[] = $kelasRow['kode_kelas'];
 }
 
+$queryMapelAll = "SELECT * FROM mata_pelajaran";
+$resultMapelAll = mysqli_query($koneksi, $queryMapelAll);
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (isset($_POST['submit'])) {
         $nama = $_POST['nama'];
         $mapel = $_POST['mapel'];
-        $jkelamin = $_POST['jkelamin'];
-        $no_telp = $_POST['no_telp'];
-        $alamat = $_POST['alamat'];
         $kelas = $_POST['kelas'];
-
-        $kelas_json = json_encode($kelas);
-
-        // Tambah kode_guru
-        $queryKode = "SELECT MAX(id) AS max_id FROM guru";
-        $resultKode = mysqli_query($koneksi, $queryKode);
-        $rowKode = mysqli_fetch_assoc($resultKode);
-        $idKode = $rowKode['max_id'] + 1;
-        $kode_guru = 'GUR' . str_pad($idKode, 5, '0', STR_PAD_LEFT);
-
-        // // Cek apakah data siswa sudah ada
-        // $queryValid = "SELECT * FROM guru WHERE nama='$nama' AND mapel='$mapel' AND no_telp='$no_telp'";
-        // $resultValid = mysqli_query($koneksi, $queryValid);
-        // if (mysqli_num_rows($resultValid) > 0) {
-        //     // Jika data siswa sudah ada, tampilkan pesan error
-        //     echo "<script>alert('Data siswa sudah ada.'); window.location.href = './crud-guru.php';</script>";
-        //     exit();
-        // }
-
-        // Lakukan query insert ke database
-        $query = "INSERT INTO guru (kode_guru, nama, mapel, kelas, jkelamin, no_telp, alamat) VALUES ('$kode_guru', '$nama', '$mapel', '$kelas_json', '$jkelamin', '$no_telp', '$alamat')";
-        mysqli_query($koneksi, $query);
-
-        // Refresh halaman agar perubahan terlihat
-        header("Location: ./crud-guru.php");
-        exit();
-    }
-
-    if (isset($_POST['update'])) {
-        $id = $_POST['id'];
-        $nama = $_POST['nama'];
-        $mapel = $_POST['mapel'];
         $jkelamin = $_POST['jkelamin'];
         $no_telp = $_POST['no_telp'];
         $alamat = $_POST['alamat'];
-        $kelas = $_POST['kelas'] ?? []; // Menggunakan array kosong jika $_POST['kelas'] tidak ada
+        $password = md5($_POST['password']);
 
-        $kelas_json = json_encode($kelas, true);
+        // Buat kode guru unik
+        $kode_guru = 'GUR' . str_pad(rand(0, 99999), 5, '0', STR_PAD_LEFT);
 
-
-        // // Cek apakah data siswa sudah ada
-        // $queryValid = "SELECT * FROM guru WHERE id='$id' AND nama='$nama' AND mapel='$mapel' AND no_telp='$no_telp'";
-        // $resultValid = mysqli_query($koneksi, $queryValid);
-        // if (mysqli_num_rows($resultValid) > 0) {
-        //     // Jika data siswa sudah ada, tampilkan pesan error
-        //     echo "<script>alert('Data siswa sudah ada.'); window.location.href = './crud-guru.php';</script>";
-        //     exit();
-        // }
-
-        // Lakukan query update ke database
-        $query = "UPDATE guru SET nama='$nama', mapel='$mapel', kelas='$kelas_json', jkelamin='$jkelamin', no_telp='$no_telp', alamat='$alamat' WHERE id='$id'";
-        mysqli_query($koneksi, $query);
-
-        // Refresh halaman agar perubahan terlihat
-        header("Location: ./crud-guru.php");
-        exit();
+        // Insert data guru ke tabel guru
+        $queryGuru = "INSERT INTO guru (kode_guru, nama, mapel_kode, no_telp, jkelamin, alamat, password) VALUES ('$kode_guru', '$nama', '$mapel', '$no_telp', '$jkelamin', '$alamat', '$password')";
+        if (mysqli_query($koneksi, $queryGuru)) {
+            // Insert data ke tabel guru_kelas
+            foreach ($kelas as $kelas_kode) {
+                $queryGuruKelas = "INSERT INTO guru_kelas (guru_kode, kelas_kode) VALUES ('$kode_guru', '$kelas_kode')";
+                if (!mysqli_query($koneksi, $queryGuruKelas)) {
+                    echo "Error inserting into guru_kelas: " . mysqli_error($koneksi);
+                    break; // Keluar dari loop jika terjadi kesalahan
+                }
+            }
+            header('Location: crud-guru.php');
+        } else {
+            echo "Error: " . mysqli_error($koneksi);
+        }
     }
 
     if (isset($_POST['delete'])) {
         $id = $_POST['id'];
 
-        // Lakukan query delete ke database
-        $query = "DELETE FROM guru WHERE id='$id'";
-        mysqli_query($koneksi, $query);
+        // Hapus data guru dari tabel guru_kelas
+        $queryDeleteGuruKelas = "DELETE FROM guru_kelas WHERE guru_kode = (SELECT kode_guru FROM guru WHERE id = '$id')";
+        mysqli_query($koneksi, $queryDeleteGuruKelas);
 
-        // Refresh halaman agar perubahan terlihat
-        header("Location: ./crud-guru.php");
-        exit();
+        // Hapus data guru dari tabel guru
+        $queryDeleteGuru = "DELETE FROM guru WHERE id = '$id'";
+        if (mysqli_query($koneksi, $queryDeleteGuru)) {
+            header('Location: crud-guru.php');
+        } else {
+            echo "Error: " . mysqli_error($koneksi);
+        }
     }
 }
 
@@ -320,37 +291,32 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <form method="post" class="mb-4 rounded text-black dark:text-white">
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 ">
                             <input type="text" name="nama" placeholder="Nama" required class="rounded px-2 py-1 bg-slate-50 dark:bg-gray-900">
-                            <?php
-                            $mapel = ['IPA', 'IPS', 'Matematika', 'Bahasa Indonesia', 'Bahasa Inggris', 'PKN', 'Sejarah', 'Informatika', 'Pemrograman', 'Jaringan', 'Penjas', 'SBK', 'Konsentrasi Keahlian', 'Pendidikan Agama'];
-                            ?>
-
                             <select name="mapel" id="mapel" class="rounded px-2 py-1 bg-slate-50 dark:bg-gray-900">
                                 <option value="pilih mapel" disabled selected>Pilih Mata Pelajaran</option>
-                                <?php foreach ($mapel as $mata_pelajaran) { ?>
-                                    <option value="<?php echo $mata_pelajaran; ?>"><?php echo $mata_pelajaran; ?></option>
+                                <?php
+                                while ($row = mysqli_fetch_assoc($resultMapelAll)) { ?>
+                                    <option value="<?php echo $row['kode_mapel']; ?>"><?php echo $row['nama']; ?></option>
                                 <?php } ?>
                             </select>
-
                             <select name="kelas" data-placeholder="Pilih Kelas" multiple data-multi-select autocomplete="off" class="rounded px-2 py-1 bg-slate-50 dark:bg-gray-900 block w-full cursor-pointer focus:outline-none">
                                 <?php
                                 if ($resultKelas->num_rows > 0) {
                                     while ($row = $resultKelas->fetch_assoc()) {
-                                        // echo '<option value="" selected disabled>Pilih Kelas</option>';
-                                        echo '<option value="' . $row['kode_kelas'] . '">' . $row['kode_kelas'] . ' ' . $row['nama'] . '</option>';
+                                        echo '<option value="' . $row['kode_kelas'] . '">' . $row['nama'] . '</option>';
                                     }
                                 } else {
                                     echo '<option value="">Tidak ada kelas</option>';
                                 }
                                 ?>
                             </select>
-
                             <select name="jkelamin" id="jkelamin" class="rounded px-2 py-1 bg-slate-50 dark:bg-gray-900">
                                 <option value="pilih jkelamin" disabled selected>Pilih Jenis Kelamin</option>
                                 <option value="L">Laki-laki</option>
                                 <option value="P">Perempuan</option>
                             </select>
-                            <input type="telp" name="no_telp" placeholder="No. Telp" required class="rounded px-2 py-1 bg-slate-50 dark:bg-gray-900">
+                            <input type="tel" name="no_telp" placeholder="No. Telp" required class="rounded px-2 py-1 bg-slate-50 dark:bg-gray-900">
                             <textarea name="alamat" placeholder="Alamat" required class="rounded px-2 py-1 bg-slate-50 dark:bg-gray-900"></textarea>
+                            <input type="password" name="password" placeholder="Password" required class="rounded px-2 py-1 bg-white dark:bg-gray-900">
                         </div>
                         <button type="submit" name="submit" class="bg-gray-900 mt-4 w-full hover:bg-gray-800 text-white font-bold p-4 rounded">Tambah Guru</button>
                     </form>
@@ -379,52 +345,35 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                         <th class="text-left"></th>
                                     </tr>
                                     <tbody>
+                                        <?php
+                                        $queryMapel = "SELECT kode_mapel, nama FROM mata_pelajaran";
+                                        $resultMapel = mysqli_query($koneksi, $queryMapel);
+
+                                        $mapelNames = [];
+                                        while ($rowMapel = mysqli_fetch_assoc($resultMapel)) {
+                                            $mapelNames[$rowMapel['kode_mapel']] = $rowMapel['nama'];
+                                        }
+                                        ?>
                                         <?php while ($guru = mysqli_fetch_assoc($resultGuru)) : ?>
                                             <tr class="border-b hover:bg-orange-100 bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-700">
                                                 <td class="p-3 px-5 font-bold"><?php echo $nomor++; ?></td>
                                                 <td class="p-3 px-5 font-bold"><?php echo $guru['kode_guru']; ?></td>
                                                 <td class="p-3 px-5"><input type="text" name="nama" value="<?php echo $guru['nama']; ?>" class="bg-transparent"></td>
+                                                <td class="p-3 px-5"><?php echo isset($mapelNames[$guru['mapel_kode']]) ? $mapelNames[$guru['mapel_kode']] : 'Mapel tidak ditemukan'; ?></td>
                                                 <td class="p-3 px-5">
-                                                    <?php echo $guru['mapel']; ?>
+                                                    <p class="text-center font-bold text-gray-900 dark:text-white text-md">
+                                                        <?php
+                                                        $queryKelasCount = "SELECT COUNT(k.nama) AS total_kelas FROM kelas k INNER JOIN guru_kelas gk ON k.kode_kelas = gk.kelas_kode WHERE gk.guru_kode = '{$guru['kode_guru']}'";
+                                                        $resultKelasCount = mysqli_query($koneksi, $queryKelasCount);
+                                                        $rowKelasCount = mysqli_fetch_assoc($resultKelasCount);
+                                                        $totalKelas = $rowKelasCount['total_kelas'];
+                                                        echo $totalKelas . ' ' . 'Kelas';
+                                                        ?>
+                                                    </p>
                                                 </td>
-                                                <td class="p-3 px-8">
-                                                    <?php
-                                                    $kelasGuru = json_decode($guru['kelas'], true);
-                                                    $kelasNames = [];
-
-                                                    // Mengambil nama kelas dari tabel kelas untuk setiap kode_kelas dalam array $kelasGuru
-                                                    foreach ($kelasGuru as $kodeKelas) {
-                                                        // Misalkan Anda memiliki koneksi database yang telah dibuat sebelumnya
-                                                        $query = "SELECT nama FROM kelas WHERE kode_kelas = '$kodeKelas'";
-                                                        $result = mysqli_query($koneksi, $query);
-
-                                                        if ($result) {
-                                                            $row = mysqli_fetch_assoc($result);
-                                                            $namaKelas = $row['nama'];
-                                                            $kelasNames[] = $namaKelas;
-                                                        }
-                                                    }
-
-                                                    // Menampilkan nama kelas dengan menggunakan span dan memberikan margin kanan
-                                                    foreach ($kelasNames as $index => $namaKelas) {
-                                                        echo '<span>' . $namaKelas . '</span>';
-                                                        // Jika bukan kelas terakhir, tambahkan koma dan spasi
-                                                        if ($index < count($kelasNames) - 1) {
-                                                            echo ', ';
-                                                        }
-                                                    }
-                                                    ?>
-                                                </td>
-
-                                                <td class="p-3 px-5">
-                                                    <?php echo ($guru['jkelamin'] == 'L') ? 'Laki-Laki' : 'Perempuan' ?>
-                                                </td>
-                                                <td class="p-3 px-5">
-                                                    <?php echo $guru['no_telp']; ?>
-                                                </td>
-                                                <td class="p-3 px-5">
-                                                    <?php echo $guru['alamat']; ?>
-                                                </td>
+                                                <td class="p-3 px-5"><?php echo ($guru['jkelamin'] == 'L') ? 'Laki-Laki' : 'Perempuan' ?></td>
+                                                <td class="p-3 px-5"><?php echo $guru['no_telp']; ?></td>
+                                                <td class="p-3 px-5"><?php echo $guru['alamat']; ?></td>
                                                 <td class="p-3">
                                                     <a href="edit-guru.php?id=<?php echo $guru['id']; ?>" class="text-sm bg-blue-500 hover:bg-blue-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline w-full text-center">Edit</a>
                                                 </td>
@@ -454,7 +403,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             </div>
                         </div>
                     </div>
-                    <!-- End Siswa List -->
+                    <!-- End Guru List -->
                 </div>
             </div>
         </div>

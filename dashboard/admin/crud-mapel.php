@@ -21,63 +21,36 @@ include '../../config/koneksi.php';
 // READ
 // Query untuk menghitung total data dan halaman
 $perPage = 5; // Jumlah data per halaman
-$query = "SELECT COUNT(*) as total FROM kelas";
+$query = "SELECT COUNT(*) as total FROM mata_pelajaran";
 $totalData = mysqli_fetch_assoc(mysqli_query($koneksi, $query))['total']; // Total data
 $lastPage = ceil($totalData / $perPage); // Hitung total halaman
 
 // Ambil data kelas untuk halaman saat ini
 $currentPage = $_GET['page'] ?? 1; // Halaman saat ini, defaultnya 1
 $start = ($currentPage - 1) * $perPage; // Hitung index awal data
-$query = "SELECT * FROM kelas LIMIT $start, $perPage";
-$resultKelas = mysqli_query($koneksi, $query);
+$query = "SELECT * FROM mata_pelajaran LIMIT $start, $perPage";
+$resultMapel = mysqli_query($koneksi, $query);
 
 // Inisialisasi nomor urut
 $nomor = ($currentPage - 1) * $perPage + 1;
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (isset($_POST['submit'])) {
-        // $kelas = $_POST['kelas'];
-        $urutan = isset($_POST['urutan']) ? $_POST['urutan'] : '';
-        $jurusan = $_POST['jurusan'];
-        $tahun_mulai = $_POST['tahun_mulai'];
-        $tahun_berakhir = $_POST['tahun_berakhir'];
-
-        if ($_POST['kelas'] == 10) {
-            $kelas = 'X';
-        } elseif ($_POST['kelas'] == 11) {
-            $kelas = 'XI';
-        } elseif ($_POST['kelas'] == 12) {
-            $kelas = 'XII';
-        } else {
-            echo "<script>alert('Kelas tidak valid.'); window.location.href = './crud-kelas.php';</script>";
-            exit();
-        }
-
-        $ta = $tahun_mulai . '-' . $tahun_berakhir;
-
-        // Cek apakah kelas sudah ada di database
-        $queryValid = "SELECT * FROM kelas WHERE nama='$nama' AND ta='$ta'";
-        $resultValid = mysqli_query($koneksi, $queryValid);
-        if (mysqli_num_rows($resultValid) > 0) {
-            echo "<script>alert('Kelas sudah ada di database.'); window.location.href = './crud-user.php';</script>";
-            exit();
-        }
+        $nama = $_POST['nama'];
 
         // Tambah kode_kelas
-        $queryKode = "SELECT MAX(id) AS max_id FROM kelas";
+        $queryKode = "SELECT MAX(id) AS max_id FROM mata_pelajaran";
         $resultKode = mysqli_query($koneksi, $queryKode);
         $rowKode = mysqli_fetch_assoc($resultKode);
         $idKode = $rowKode['max_id'] + 1;
-        $kode_kelas = 'KEL' . str_pad($idKode, 5, '0', STR_PAD_LEFT);
-
-        $namaKelas = $kelas . '-' . $jurusan . ' ' . $urutan;
+        $kode_mapel = 'MAP' . str_pad($idKode, 5, '0', STR_PAD_LEFT);
 
         // Lakukan query insert ke database
-        $query = "INSERT INTO kelas (kode_kelas, nama, jurusan, ta) VALUES ('$kode_kelas', '$namaKelas', '$jurusan', '$ta')";
+        $query = "INSERT INTO mata_pelajaran (kode_mapel, nama) VALUES ('$kode_mapel', '$nama')";
         mysqli_query($koneksi, $query);
 
         // Refresh halaman agar perubahan terlihat
-        header("Location: ./crud-kelas.php");
+        header("Location: ./crud-mapel.php");
         exit();
     }
 
@@ -85,11 +58,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $id = $_POST['id'];
 
         // Lakukan query delete ke database
-        $query = "DELETE FROM kelas WHERE id='$id'";
+        $query = "DELETE FROM mata_pelajaran WHERE id='$id'";
         mysqli_query($koneksi, $query);
 
         // Refresh halaman agar perubahan terlihat
-        header("Location: ./crud-kelas.php");
+        header("Location: ./crud-mapel.php");
         exit();
     }
 }
@@ -280,31 +253,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             <div class="h-full ml-14 mt-14 mb-10 md:ml-64">
                 <div class="container p-4">
-                    <h1 class="text-2xl font-bold mb-4">CRUD Kelas</h1>
+                    <h1 class="text-2xl font-bold mb-4">CRUD Mapel</h1>
                     <!-- Form Create Kelas -->
                     <form method="post" class="mb-4 rounded text-black dark:text-white">
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                            <input type="number" min="10" max="12" name="kelas" placeholder="Kelas" required class="rounded px-2 py-1 bg-white dark:bg-gray-900">
-                            <input type="number" min="1" max="6" name="urutan" placeholder="Kosongkan jika hanya satu kelas dalam satu angkatan" class="rounded px-2 py-1 bg-white dark:bg-gray-900">
-                            <select name="jurusan" id="jurusan" class="rounded px-2 py-1 bg-white dark:bg-gray-900">
-                                <option value="pilih jurusan" disabled selected>Pilih Jurusan</option>
-                                <option value="RPL">Rekayasa Perangkat Lunak</option>
-                                <option value="TJKT">Teknik Jaringan Komputer dan Telekomunikasi</option>
-                                <option value="MPLB">Manajemen Perkantoran dan Layanan Bisnis</option>
-                                <option value="PM">Pemasaran</option>
-                                <option value="AKL">Akuntansi dan Keuangan Lembaga</option>
-                            </select>
-                            <input type="number" id="tahun_mulai" min="2000" max="<?php echo date('Y'); ?>" name="tahun_mulai" placeholder="Tahun Mulai" required class="rounded px-2 py-1 bg-white dark:bg-gray-900">
-                            <input type="number" id="tahun_berakhir" min="2000" max="<?php echo date('Y'); ?>" name="tahun_berakhir" placeholder="Tahun Berakhir" required class="rounded px-2 py-1 bg-white dark:bg-gray-900">
+                            <input type="text" name="nama" placeholder="Nama Mata Pelajaran" required class="rounded px-2 py-1 bg-white dark:bg-gray-900">
                         </div>
-                        <button type="submit" name="submit" class="w-full p-4 mt-4 bg-gray-900 hover:bg-gray-800 text-white font-bold rounded">Tambah Kelas</button>
+                        <button type="submit" name="submit" class="w-full p-4 mt-4 bg-gray-900 hover:bg-gray-800 text-white font-bold rounded">Tambah Mata Pelajaran</button>
                     </form>
 
                     <!-- Kelas List -->
                     <div class="text-gray-900 bg-gray-200 dark:bg-gray-900 dark:text-gray-100 rounded-md">
                         <div class="p-4 flex">
                             <h1 class="text-3xl">
-                                Kelas
+                                Mata Pelajaran
                             </h1>
                         </div>
                         <div class="px-3 py-4 flex justify-center">
@@ -313,30 +275,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     <tr class="border-b">
                                         <th class="text-left p-3 px-5">No</th>
                                         <th class="text-left p-3 px-5">Kode</th>
-                                        <th class="text-left p-3 px-5">Kelas</th>
-                                        <th class="text-left p-3 px-5">Jurusan</th>
-                                        <th class="text-left p-3 px-5">Tahun Mulai</th>
-                                        <th class="text-left p-3 px-5">Tahun Berakhir</th>
+                                        <th class="text-left p-3 px-5">Nama</th>
                                         <th class="text-left"></th>
                                         <th class="text-left"></th>
                                     </tr>
                                     <tbody>
-                                        <?php while ($kelas = mysqli_fetch_assoc($resultKelas)) : ?>
-                                            <?php
-                                            list($ta_mulai, $ta_berakhir) = explode('-', $kelas['ta']);
-                                            ?>
+                                        <?php while ($mapel = mysqli_fetch_assoc($resultMapel)) : ?>
                                             <tr class="border-b hover:bg-orange-100 bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-700">
                                                 <td class="p-3 px-5 font-bold"><?php echo $nomor++; ?></td>
-                                                <td class="p-3 px-5 font-bold"><?php echo $kelas['kode_kelas']; ?></td>
-                                                <td class="p-3 px-5"><?php echo $kelas['nama']; ?></td>
-                                                <td class="p-3 px-5"><?php echo $kelas['jurusan']; ?></td>
-                                                <td class="p-3 px-5"><?php echo $ta_mulai; ?></td>
-                                                <td class="p-3 px-5"><?php echo $ta_berakhir; ?></td>
+                                                <td class="p-3 px-5 font-bold"><?php echo $mapel['kode_mapel']; ?></td>
+                                                <td class="p-3 px-5"><?php echo $mapel['nama']; ?></td>
                                                 <td class="p-3">
-                                                    <a href="edit-kelas.php?id=<?php echo $kelas['id']; ?>" class="text-sm bg-blue-500 hover:bg-blue-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline w-full text-center">Edit</a>
+                                                    <a href="edit-mapel.php?id=<?php echo $mapel['id']; ?>" class="text-sm bg-blue-500 hover:bg-blue-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline w-full text-center">Edit</a>
                                                 </td>
                                                 <form method="post">
-                                                    <input type="hidden" name="id" value="<?php echo $kelas['id']; ?>">
+                                                    <input type="hidden" name="id" value="<?php echo $mapel['id']; ?>">
                                                     <td class="p-3">
                                                         <button type="submit" name="delete" class="text-sm bg-red-500 hover:bg-red-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline w-full">Delete</button>
                                                     </td>
@@ -388,24 +341,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 },
             }
         }
-    </script>
-    <script>
-        // Ambil semua elemen input tahun mulai dan tahun berakhir
-        var tahunMulaiInputs = document.querySelectorAll('input[name="tahun_mulai"]');
-        var tahunBerakhirInputs = document.querySelectorAll('input[name="tahun_berakhir"]');
-
-        // Tambahkan event listener untuk setiap input tahun mulai
-        tahunMulaiInputs.forEach(function(tahunMulaiInput, index) {
-            // Ketika nilai input tahun mulai berubah
-            tahunMulaiInput.addEventListener('change', function() {
-                // Set nilai min pada input tahun berakhir terkait
-                tahunBerakhirInputs[index].min = tahunMulaiInput.value;
-                // Reset nilai input tahun berakhir jika nilainya lebih kecil dari tahun mulai yang baru
-                if (parseInt(tahunBerakhirInputs[index].value) < parseInt(tahunMulaiInput.value)) {
-                    tahunBerakhirInputs[index].value = tahunMulaiInput.value;
-                }
-            });
-        });
     </script>
 </body>
 

@@ -38,7 +38,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (isset($_POST['submit'])) {
         $nama = $_POST['nama'];
         $kelas = $_POST['kelas'];
-        $jurusan = $_POST['jurusan'];
         $jkelamin = $_POST['jkelamin'];
         $no_telp = $_POST['no_telp'];
 
@@ -50,7 +49,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $kode_siswa = 'SIS' . str_pad($idKode, 5, '0', STR_PAD_LEFT);
 
         // Cek apakah data siswa sudah ada
-        $queryValid = "SELECT * FROM siswa WHERE nama='$nama' AND kelas='$kelas' AND jurusan='$jurusan' AND jkelamin='$jkelamin' AND no_telp='$no_telp'";
+        $queryValid = "SELECT * FROM siswa WHERE nama='$nama' AND kelas='$kelas' AND jkelamin='$jkelamin' AND no_telp='$no_telp'";
         $resultValid = mysqli_query($koneksi, $queryValid);
         if (mysqli_num_rows($resultValid) > 0) {
             // Jika data siswa sudah ada, tampilkan pesan error
@@ -59,33 +58,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         // Lakukan query insert ke database
-        $query = "INSERT INTO siswa (kode_siswa, nama, kelas, jurusan, jkelamin, no_telp) VALUES ('$kode_siswa', '$nama', '$kelas', '$jurusan', '$jkelamin', '$no_telp')";
-        mysqli_query($koneksi, $query);
-
-        // Refresh halaman agar perubahan terlihat
-        header("Location: ./crud-siswa.php");
-        exit();
-    }
-
-    if (isset($_POST['update'])) {
-        $id = $_POST['id'];
-        $nama = $_POST['nama'];
-        $kelas = $_POST['kelas'];
-        $jurusan = $_POST['jurusan'];
-        $jkelamin = $_POST['jkelamin'];
-        $no_telp = $_POST['no_telp'];
-
-        // Cek apakah data siswa sudah ada
-        $query = "SELECT * FROM siswa WHERE nama='$nama' AND kelas='$kelas' AND jurusan='$jurusan' AND jkelamin='$jkelamin' AND no_telp='$no_telp'";
-        $result = mysqli_query($koneksi, $query);
-        if (mysqli_num_rows($result) > 0) {
-            // Jika data siswa sudah ada, tampilkan pesan error
-            echo "<script>alert('Data siswa sudah ada.'); window.location.href = './crud-siswa.php';</script>";
-            exit();
-        }
-
-        // Lakukan query update ke database
-        $query = "UPDATE siswa SET nama='$nama', kelas='$kelas', jurusan='$jurusan', jkelamin='$jkelamin', no_telp='$no_telp' WHERE id='$id'";
+        $query = "INSERT INTO siswa (kode_siswa, nama, kelas, jkelamin, no_telp) VALUES ('$kode_siswa', '$nama', '$kelas', '$jkelamin', '$no_telp')";
         mysqli_query($koneksi, $query);
 
         // Refresh halaman agar perubahan terlihat
@@ -304,17 +277,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             </select>
                             <select name="kelas" id="kelas" class="rounded px-2 py-1 bg-white dark:bg-gray-900">
                                 <option value="pilih kelas" disabled selected>Pilih Kelas</option>
-                                <option value="10">X (10)</option>
-                                <option value="11">XI (11)</option>
-                                <option value="12">XII (12)</option>
-                            </select>
-                            <select name="jurusan" id="jurusan" class="rounded px-2 py-1 bg-white dark:bg-gray-900">
-                                <option value="pilih jurusan" disabled selected>Pilih Jurusan</option>
-                                <option value="RPL">Rekayasa Perangkat Lunak</option>
-                                <option value="TJKT">Teknik Jaringan Komputer dan Telekomunikasi</option>
-                                <option value="MPLB">Manajemen Perkantoran dan Layanan Bisnis</option>
-                                <option value="PM">Pemasaran</option>
-                                <option value="AKL">Akuntansi dan Keuangan Lembaga</option>
+                                <?php
+                                $queryKelas = "SELECT * FROM kelas";
+                                $resultKelas = mysqli_query($koneksi, $queryKelas);
+
+                                while ($row = mysqli_fetch_assoc($resultKelas)) {
+                                ?>
+                                    <option value="<?php echo $row['kode_kelas']; ?>"><?php echo $row['nama']; ?></option>
+                                <?php } ?>
                             </select>
                             <input type="telp" name="no_telp" placeholder="No. Telp" required class="rounded px-2 py-1 bg-white dark:bg-gray-900">
                         </div>
@@ -338,29 +308,35 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                         <th class="text-left p-3 px-5">Nama</th>
                                         <th class="text-left p-3 px-5">Jenis Kelamin</th>
                                         <th class="text-left p-3 px-5">Kelas</th>
-                                        <th class="text-left p-3 px-5">Jurusan</th>
                                         <th class="text-left p-3 px-5">No. Telp</th>
                                         <th class="text-left"></th>
                                         <th class="text-left"></th>
                                     </tr>
                                     <tbody>
+                                        <?php
+                                        // Mengambil semua data kelas sebelum loop
+                                        $queryKelasAll = "SELECT kode_kelas, nama FROM kelas";
+                                        $resultKelasAll = mysqli_query($koneksi, $queryKelasAll);
+
+                                        $kelasNames = [];
+                                        while ($rowKelasAll = mysqli_fetch_assoc($resultKelasAll)) {
+                                            $kelasNames[$rowKelasAll['kode_kelas']] = $rowKelasAll['nama'];
+                                        }
+                                        ?>
+
                                         <?php while ($siswa = mysqli_fetch_assoc($resultSiswa)) : ?>
                                             <tr class="border-b hover:bg-orange-100 bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-700">
                                                 <td class="p-3 px-5 font-bold"><?php echo $nomor++; ?></td>
                                                 <td class="p-3 px-5 font-bold"><?php echo $siswa['kode_siswa']; ?></td>
                                                 <td class="p-3 px-5"><?php echo $siswa['nama']; ?></td>
+                                                <td class="p-3 px-5"><?php echo ($siswa['jkelamin'] == 'L') ? 'Laki-Laki' : 'Perempuan'; ?></td>
                                                 <td class="p-3 px-5">
-                                                    <?php echo ($siswa['jkelamin'] == 'L') ? 'Laki-Laki' : 'Perempuan' ?>
+                                                    <?php
+                                                    // Menggunakan array $kelasNames yang telah dibuat sebelumnya
+                                                    echo isset($kelasNames[$siswa['kelas']]) ? $kelasNames[$siswa['kelas']] : 'Kelas tidak ditemukan';
+                                                    ?>
                                                 </td>
-                                                <td class="p-3 px-5">
-                                                    <?php echo $siswa['kelas']; ?>
-                                                </td>
-                                                <td class="p-3 px-5">
-                                                    <?php echo $siswa['jurusan'];?>
-                                                </td>
-                                                <td class="p-3 px-5">
-                                                    <?php echo $siswa['no_telp']; ?>
-                                                </td>
+                                                <td class="p-3 px-5"><?php echo $siswa['no_telp']; ?></td>
                                                 <td class="p-3">
                                                     <a href="edit-siswa.php?id=<?php echo $siswa['id']; ?>" class="text-sm bg-blue-500 hover:bg-blue-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline w-full text-center">Edit</a>
                                                 </td>

@@ -17,42 +17,24 @@ if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'guru')) {
 
 include '../../config/koneksi.php';
 
-// Query untuk menghitung total siswa
-$kodeGuru = $_SESSION['username']; // Sesuaikan dengan nama variabel session Anda
+// Ambil Kode dari URL dan escape untuk menghindari SQL injection
+$kodeKelas = mysqli_real_escape_string($koneksi, $_GET['kode_kelas']);
 
-// Ambil daftar kelas yang diajar oleh guru yang sedang login
-$queryKelasGuru = "SELECT kelas_kode FROM guru_kelas WHERE guru_kode = '$kodeGuru'";
-$resultKelasGuru = $koneksi->query($queryKelasGuru);
+// READ
+// Query untuk menghitung total data dan halaman
+$perPage = 5; // Jumlah data per halaman
+$query = "SELECT COUNT(*) as total FROM siswa WHERE kelas = '$kodeKelas'";
+$totalData = mysqli_fetch_assoc(mysqli_query($koneksi, $query))['total']; // Total data
+$lastPage = ceil($totalData / $perPage); // Hitung total halaman
 
-$kelasCodes = [];
-if ($resultKelasGuru->num_rows > 0) {
-    while ($row = $resultKelasGuru->fetch_assoc()) {
-        $kelasCodes[] = $row['kelas_kode'];
-    }
-}
+// Ambil data siswa untuk halaman saat ini
+$currentPage = $_GET['page'] ?? 1; // Halaman saat ini, defaultnya 1
+$start = ($currentPage - 1) * $perPage; // Hitung index awal data
+$query = "SELECT * FROM siswa WHERE kelas = '$kodeKelas' LIMIT $start, $perPage";
+$resultMurid = mysqli_query($koneksi, $query);
 
-// Jika guru mengajar setidaknya satu kelas
-if (!empty($kelasCodes)) {
-    // Buat string dari kode kelas untuk digunakan dalam query
-    $kelasCodesString = "'" . implode("','", $kelasCodes) . "'";
-
-    // Hitung total siswa di kelas-kelas tersebut
-    $sqlSiswa = "SELECT COUNT(*) as total_siswa FROM siswa WHERE kelas IN ($kelasCodesString)";
-    $resultSiswa = $koneksi->query($sqlSiswa);
-
-    // Ambil hasil query total siswa
-    if ($resultSiswa->num_rows > 0) {
-        $rowSiswa = $resultSiswa->fetch_assoc();
-        $total_siswa = $rowSiswa['total_siswa'];
-    } else {
-        $total_siswa = 0;
-    }
-
-    $total_kelas = count($kelasCodes);
-} else {
-    $total_kelas = 0;
-    $total_siswa = 0;
-}
+// Inisialisasi nomor urut
+$nomor = ($currentPage - 1) * $perPage + 1;
 
 ?>
 <!DOCTYPE html>
@@ -264,32 +246,67 @@ if (!empty($kelasCodes)) {
             <!-- ./Sidebar -->
 
             <div class="h-full ml-14 mt-14 mb-10 md:ml-64">
-                <!-- Statistics Cards -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 p-4 gap-4">
-                    <div class="bg-blue-500 dark:bg-gray-800 shadow-lg rounded-md flex items-center justify-between p-3 border-b-4 border-blue-600 dark:border-gray-600 text-white font-medium group">
-                        <div class="flex justify-center items-center w-14 h-14 bg-white rounded-full transition-all duration-300 transform group-hover:rotate-12">
-                            <svg width="30" height="30" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="stroke-current text-blue-800 dark:text-gray-800 transform transition-transform duration-500 ease-in-out">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                            </svg>
+                <div class="container p-4">
+
+                    <!-- Siswa List -->
+                    <div class="text-gray-900 bg-gray-200 dark:bg-gray-900 dark:text-gray-100 rounded-md">
+                        <div class="p-4 flex">
+                            <h1 class="text-3xl">
+                                Siswa
+                            </h1>
                         </div>
-                        <div class="text-right">
-                            <p class="text-2xl"><?php echo $total_siswa ?></p>
-                            <p>Siswa</p>
+                        <div class="px-3 py-4 flex justify-center">
+                            <div class="overflow-x-auto w-full">
+                                <table class="w-full text-md bg-white dark:bg-gray-800 shadow-md rounded mb-4">
+                                    <tr class="border-b">
+                                        <th class="text-left p-3 px-5">No</th>
+                                        <th class="text-left p-3 px-5">Kode</th>
+                                        <th class="text-left p-3 px-5">Nama</th>
+                                        <th class="text-left p-3 px-5">Jenis Kelamin</th>
+                                        <!-- <th class="text-left p-3 px-5">Kelas</th> -->
+                                        <th class="text-left p-3 px-5">No. Telp</th>
+                                        <!-- <th class="text-left"></th>
+                                        <th class="text-left"></th> -->
+                                    </tr>
+                                    <tbody>
+                                        <?php while ($siswa = mysqli_fetch_assoc($resultMurid)) : ?>
+                                            <tr class="border-b hover:bg-orange-100 bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-700">
+                                                <td class="p-3 px-5 font-bold"><?php echo $nomor++; ?></td>
+                                                <td class="p-3 px-5 font-bold"><?php echo $siswa['kode_siswa']; ?></td>
+                                                <td class="p-3 px-5"><?php echo $siswa['nama']; ?></td>
+                                                <td class="p-3 px-5"><?php echo ($siswa['jkelamin'] == 'L') ? 'Laki-Laki' : 'Perempuan'; ?></td>
+                                                <td class="p-3 px-5"><?php echo $siswa['no_telp']; ?></td>
+                                                <!-- <td class="p-3">
+                                                    <a href="edit-siswa.php?id=<?php echo $siswa['id']; ?>" class="text-sm bg-blue-500 hover:bg-blue-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline w-full text-center">Edit</a>
+                                                </td>
+                                                <form method="post">
+                                                    <input type="hidden" name="id" value="<?php echo $siswa['id']; ?>">
+                                                    <td class="p-3">
+                                                        <button type="submit" name="delete" class="text-sm bg-red-500 hover:bg-red-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline w-full">Delete</button>
+                                                    </td>
+                                                </form> -->
+                                            </tr>
+                                        <?php endwhile; ?>
+                                    </tbody>
+                                </table>
+
+                                <!-- Pagination -->
+                                <div x-data="{ currentPage: <?php echo $currentPage; ?>, lastPage: <?php echo $lastPage; ?> }" class="text-center m-4 dark:text-black">
+                                    <a x-bind:href="'?kode_kelas=<?php echo $kodeKelas; ?>&page=' + (currentPage > 1 ? currentPage - 1 : 1)" class="inline-block bg-gray-200 hover:bg-gray-300 rounded px-3 py-1 mr-2">
+                                        <button @click="currentPage = currentPage > 1 ? currentPage - 1 : 1" class="focus:outline-none">Previous</button>
+                                    </a>
+                                    <span x-text="currentPage" class="mx-2 dark:text-white"></span>
+                                    <a x-bind:href="'?kode_kelas=<?php echo $kodeKelas; ?>&page=' + (currentPage < lastPage ? currentPage + 1 : lastPage)" class="inline-block bg-gray-200 hover:bg-gray-300 rounded px-3 py-1 ml-2">
+                                        <button @click="currentPage = currentPage < lastPage ? currentPage + 1 : lastPage" class="focus:outline-none">Next</button>
+                                    </a>
+                                </div>
+                                <!-- End Pagination -->
+
+                            </div>
                         </div>
                     </div>
-                    <div class="bg-blue-500 dark:bg-gray-800 shadow-lg rounded-md flex items-center justify-between p-3 border-b-4 border-blue-600 dark:border-gray-600 text-white font-medium group">
-                        <div class="flex justify-center items-center w-14 h-14 bg-white rounded-full transition-all duration-300 transform group-hover:rotate-12">
-                            <svg width="30" height="30" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="stroke-current text-blue-800 dark:text-gray-800 transform transition-transform duration-500 ease-in-out">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                            </svg>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-2xl"><?php echo $total_kelas ?></p>
-                            <p>Kelas</p>
-                        </div>
-                    </div>
+                    <!-- End Siswa List -->
                 </div>
-                <!-- ./Statistics Cards -->
             </div>
         </div>
     </div>

@@ -31,6 +31,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $r = mysqli_fetch_array($sqlLoginGuru);
             $_SESSION['status_login'] = 'sudah_login';
             $_SESSION['nama'] = $r['nama'];
+            $_SESSION['username'] = $r['kode_guru'];
             $_SESSION['role'] = 'guru'; // Misalkan role untuk guru adalah 'guru'
 
             echo json_encode(['status' => 'success', 'redirect' => '../dashboard/user/']);

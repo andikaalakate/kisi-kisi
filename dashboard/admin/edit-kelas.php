@@ -39,22 +39,28 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if (isset($_POST['update'])) {
         $id = $_POST['id'];
-        $nama = $_POST['nama'];
+        // $kelas = $_POST['kelas'];
+        $urutan = isset($_POST['urutan']) ? $_POST['urutan'] : '';
+        $jurusan = $_POST['jurusan'];
         $tahun_mulai = $_POST['tahun_mulai'];
         $tahun_berakhir = $_POST['tahun_berakhir'];
 
-        $ta = $tahun_mulai . '-' . $tahun_berakhir;
-
-        // Cek apakah kelas sudah ada di database
-        $queryValid = "SELECT * FROM kelas WHERE nama='$nama' AND ta='$ta' AND id != '$id'";
-        $resultValid = mysqli_query($koneksi, $queryValid);
-        if (mysqli_num_rows($resultValid) > 0) {
-            echo "<script>alert('Kelas sudah ada di database.'); window.location.href = './crud-kelas.php';</script>";
+        if ($_POST['kelas'] == 10) {
+            $kelas = 'X';
+        } elseif ($_POST['kelas'] == 11) {
+            $kelas = 'XI';
+        } elseif ($_POST['kelas'] == 12) {
+            $kelas = 'XII';
+        } else {
+            echo "<script>alert('Kelas tidak valid.'); window.location.href = './crud-kelas.php';</script>";
             exit();
         }
 
+        $ta = $tahun_mulai . '-' . $tahun_berakhir;
+        $namaKelas = $kelas . '-' . $jurusan . ' ' . $urutan;
+
         // Lakukan query update ke database
-        $query = "UPDATE kelas SET nama='$nama', ta='$ta' WHERE id='$id'";
+        $query = "UPDATE kelas SET nama='$namaKelas', ta='$ta' WHERE id='$id'";
         mysqli_query($koneksi, $query);
 
         // Refresh halaman agar perubahan terlihat
@@ -252,13 +258,67 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <h1 class="text-2xl font-bold mb-4">CRUD Kelas</h1>
                     <?php
                     list($ta_mulai, $ta_berakhir) = explode('-', $kelas['ta']);
+
+                    $kelasp = $kelas['nama'];
+                    // Menggunakan preg_split untuk memecah string berdasarkan tanda hubung dan spasi
+                    $parts = preg_split('/[- ]/', $kelasp);
+
+                    if (count($parts) === 3) {
+                        list($kelas1, $jurusan, $urutan) = $parts;
+                    } else {
+                        // Tangani kasus ketika jumlah elemen hasil preg_split tidak sesuai
+                        $kelas1 = $parts[0] ?? null;
+                        $jurusan = $parts[1] ?? null;
+                        $urutan = $parts[2] ?? null;
+                    }
+
+
+                    if ($kelas1 == 'X') {
+                        $kelas1 = '10';
+                    } elseif ($kelas1 == 'XI') {
+                        $kelas1 = '11';
+                    } elseif ($kelas1 == 'XII') {
+                        $kelas1 = '12';
+                    }
                     ?>
                     <form method="post" class="mb-4 p-4 bg-gray-100 dark:bg-gray-800 rounded text-black dark:text-white shadow-lg">
                         <input type="text" hidden name="id" value="<?php echo $kelas['id'] ?>">
                         <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
                             <div class="flex flex-col">
-                                <label for="nama" class="mb-2 font-semibold">Nama Kelas</label>
-                                <input type="text" id="nama" name="nama" value="<?php echo $kelas['nama'] ?>" placeholder="nama" required class="rounded px-2 py-1 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <label for="kelas" class="mb-2 font-semibold">Kelas</label>
+                                <input type="number" min="10" max="12" id="kelas" name="kelas" value="<?php echo $kelas1 ?>" placeholder="Kelas" required class="rounded px-2 py-1 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div class="flex flex-col">
+                                <label for="urutan" class="mb-2 font-semibold">Urutan</label>
+                                <input type="number" min="1" max="6" id="urutan" name="urutan" value="<?php echo $urutan ?>" placeholder="Kelas Ke" required class="rounded px-2 py-1 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div class="flex flex-col">
+                                <label for="jurusan" class="mb-2 font-semibold">Jurusan</label>
+                                <select name="jurusan" id="jurusan" class="rounded px-2 py-1 bg-white dark:bg-gray-900">
+                                    <option value="pilih jurusan" disabled>Pilih Jurusan</option>
+                                    <?php
+                                    // Ambil definisi kolom 'jurusan' dari tabel 'kelas'
+                                    $queryEnumValues = "SHOW COLUMNS FROM kelas LIKE 'jurusan'";
+                                    $resultEnumValues = mysqli_query($koneksi, $queryEnumValues);
+                                    $rowEnum = mysqli_fetch_assoc($resultEnumValues);
+
+                                    // Ekstrak nilai-nilai enum dari definisi kolom
+                                    $type = $rowEnum['Type'];
+                                    preg_match("/^enum\(\'(.*)\'\)$/", $type, $matches);
+                                    $enumValues = explode("','", $matches[1]);
+
+                                    // Ambil data kelas dari tabel 'kelas'
+                                    $queryKelas = "SELECT * FROM kelas";
+                                    $resultKelas = mysqli_query($koneksi, $queryKelas);
+
+                                    foreach ($enumValues as $value) {
+                                        $selected = ($value == $kelas['jurusan']) ? 'selected' : '';
+                                    ?>
+                                        <option value="<?php echo $value; ?>" <?php echo $selected; ?>>
+                                            <?php echo $value; ?>
+                                        </option>
+                                    <?php } ?>
+                                </select>
                             </div>
                             <div class="flex flex-col">
                                 <label for="tahun_mulai" class="mb-2 font-semibold">Tahun Mulai</label>

@@ -26,11 +26,11 @@
             </div>
             <button type="submit">LOGIN</button>
         </form>
-        <button>
+        <!-- <button>
             <a href="/register">
                 REGISTER
             </a>
-        </button>
+        </button> -->
     </div>
 
     <script>
